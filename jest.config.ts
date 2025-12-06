@@ -7,7 +7,7 @@ const config: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
-  clearMocks: true
+  clearMocks: true,
 };
 
 export default config;

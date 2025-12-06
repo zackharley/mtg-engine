@@ -29,7 +29,6 @@ describe('defineCard ability modeling', () => {
 
     expect(card.id).toMatch(/^card-/);
     expect(card.abilities).toHaveLength(1);
-    expect(card.abilities[0].id).toMatch(/^ability-/);
     if (card.abilities[0].type === 'spell') {
       expect(typeof card.abilities[0].targets).toBe('function');
       const dummyCtx = {
@@ -63,10 +62,5 @@ describe('defineCard ability modeling', () => {
 
     const ability = card.abilities[0];
     expect(ability.type).toBe('triggered');
-    if (ability.type === 'triggered') {
-      expect(ability.trigger.id).toMatch(/^trigger-/);
-    } else {
-      throw new Error('expected triggered ability');
-    }
   });
 });

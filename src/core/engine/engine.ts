@@ -1,11 +1,28 @@
 import { GameLog } from '../game-log/game-log';
-import { GameState, isGameOver } from '../state/state';
+import { reduce, GameEvent } from '../state/reducer';
+import { GameState, isGameOver, nextEngineAction } from '../state/state';
 
-function runGame(initialState: GameState) {
+export interface RunGameResult {
+  finalState: GameState;
+  gameLog: GameLog;
+  events: GameEvent[];
+}
+
+export function runGame(initialState: GameState): RunGameResult {
   let state = initialState;
   const gameLog: GameLog = [];
+  const allEvents: GameEvent[] = [];
 
-  while (!isGameOver(state)) {}
+  while (!isGameOver(state)) {
+    const engineAction = nextEngineAction(state);
+    if (!engineAction) {
+      break;
+    }
 
-  return { finalState: state, gameLog: [] };
+    const result = reduce(state, engineAction);
+    state = result.state;
+    allEvents.push(...result.events);
+  }
+
+  return { finalState: state, gameLog, events: allEvents };
 }

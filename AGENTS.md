@@ -34,6 +34,7 @@
 3. **Mutation-safe testing** – add regression tests for every discovered bug before fixing it.
 4. **Watch mode** – run `npm test -- --watch` during active development to keep feedback tight; commit only when the full suite passes.
 5. **Coverage gates** – keep critical modules (rules engine, stack resolution, combat) at ≥95% statement coverage; new files should not drop overall coverage.
+6. **Harness boundaries** – `src/index.ts` is only a thin adapter for player decisions; it must never mutate state directly. All state changes live in the engine layer or deeper.
 
 ## System Architecture
 

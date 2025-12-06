@@ -1,4 +1,10 @@
-import { Id, makeId } from '../id/id';
+import {
+  CardDefinitionId,
+  CardId,
+  makeCardDefinitionId,
+  PlayerId,
+  TargetId,
+} from '../primitives/id';
 import { ManaCost } from '../costs/mana-costs';
 import { GameEvent, ReduceContext } from '../state/reducer';
 
@@ -20,7 +26,7 @@ type CardType =
   | 'vanguard';
 
 export interface CardDefinition {
-  id: Id;
+  id: CardDefinitionId;
   scryfallId: string; // This defines which version of the card we're using
 
   // Metadata
@@ -32,7 +38,16 @@ export interface CardDefinition {
   abilities: CardAbility[];
 }
 
-export type AbilityEffect = (ctx: ReduceContext) => void;
+export interface AbilityEffectArgs {
+  sourceId: CardId;
+  controllerId: PlayerId;
+  targets: TargetId[];
+}
+
+export type AbilityEffect = (
+  ctx: ReduceContext,
+  args: AbilityEffectArgs,
+) => void;
 
 export type AbilityCost =
   | { kind: 'MANA'; manaCost: ManaCost }
@@ -42,11 +57,11 @@ export type AbilityCost =
 
 export type TargetValidator = (input: {
   ctx: ReduceContext;
-  candidateId: Id;
+  candidateId: TargetId;
 }) => boolean;
 
 export interface AbilityTarget {
-  id: string;
+  // id: string;
   description: string;
   minTargets: number;
   maxTargets: number;
@@ -56,7 +71,7 @@ export interface AbilityTarget {
 export type AbilityTargetBuilder = (ctx: ReduceContext) => AbilityTarget[];
 
 export interface SpellMode {
-  id: string;
+  // id: string;
   text: string;
   effect: AbilityEffect;
 }
@@ -67,13 +82,13 @@ export interface ContinuousEffect {
 }
 
 export interface TriggerCondition {
-  id: Id;
+  // id: Id;
   description: string;
-  matches(event: GameEvent, ctx: ReduceContext, sourceId: Id): boolean;
+  matches(event: GameEvent, ctx: ReduceContext, sourceId: CardId): boolean;
 }
 
 interface CardAbilityBase {
-  id: Id;
+  // id: Id;
   text: string;
 }
 
@@ -102,7 +117,7 @@ export interface TriggeredAbility extends CardAbilityBase {
 
 export interface StaticAbility extends CardAbilityBase {
   type: 'static';
-  effect: (ctx: ReduceContext, sourceId: Id) => ContinuousEffect;
+  effect: (ctx: ReduceContext, sourceId: CardId) => ContinuousEffect;
 }
 
 export type CardAbility =
@@ -123,29 +138,33 @@ export type CardDefinitionInput = Omit<CardDefinition, 'id' | 'abilities'> & {
   abilities: CardAbilityInput[];
 };
 
+export interface Card {
+  id: CardId;
+  definitionId: CardDefinitionId;
+  controllerId: PlayerId;
+  tapped?: boolean;
+}
+
 export function defineCard(input: CardDefinitionInput): CardDefinition {
   return {
-    id: makeId('card'),
+    id: makeCardDefinitionId(),
     ...input,
     abilities: input.abilities.map(createAbility),
   };
 }
 
 function createAbility(ability: CardAbilityInput): CardAbility {
-  const id = makeId('ability');
   switch (ability.type) {
     case 'triggered':
       return {
         ...ability,
-        id,
         trigger: {
           ...ability.trigger,
-          id: makeId('trigger'),
         },
       };
     case 'spell':
     case 'static':
     case 'activated':
-      return { ...ability, id };
+      return { ...ability };
   }
 }

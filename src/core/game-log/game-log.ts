@@ -1,8 +1,8 @@
-import { Id } from '../id/id';
+import { PlayerId } from '../primitives/id';
 
 export type GameLog = GameLogEntry[];
 
-export type GameLogEntry = {
+export interface GameLogEntry {
   type: string;
-  playerId: Id;
-};
+  playerId: PlayerId;
+}

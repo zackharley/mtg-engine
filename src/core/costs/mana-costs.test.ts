@@ -6,9 +6,9 @@ describe('parseManaCost', () => {
       pips: [
         { kind: 'GENERIC', amount: 3 },
         { kind: 'COLORED', color: 'R', amount: 1 },
-        { kind: 'COLORED', color: 'G', amount: 1 }
+        { kind: 'COLORED', color: 'G', amount: 1 },
       ],
-      raw: '{3}{R}{G}'
+      raw: '{3}{R}{G}',
     });
   });
 
@@ -16,9 +16,9 @@ describe('parseManaCost', () => {
     expect(parseManaCost('{C}{S}')).toEqual({
       pips: [
         { kind: 'COLORLESS', amount: 1 },
-        { kind: 'SNOW', amount: 1 }
+        { kind: 'SNOW', amount: 1 },
       ],
-      raw: '{C}{S}'
+      raw: '{C}{S}',
     });
   });
 
@@ -28,9 +28,9 @@ describe('parseManaCost', () => {
         { kind: 'HYBRID_COLORED', colors: ['W', 'U'] },
         { kind: 'HYBRID_2_COLOR', genericAmount: 2, color: 'G' },
         { type: 'PHYREXIAN', color: 'U' },
-        { type: 'X' }
+        { type: 'X' },
       ],
-      raw: '{W/U}{2/G}{U/P}{X}'
+      raw: '{W/U}{2/G}{U/P}{X}',
     });
   });
 
