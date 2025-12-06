@@ -41,6 +41,7 @@
 - **Effect Pipelines** – Compose card abilities from effect primitives (targeting, filtering, resolving) chained by higher-order helpers.
 - **Event Bus** – Publish structured events (`SpellCast`, `TriggerCreated`, `StateBasedAction`) to support logging and UI; keep event types strongly typed.
 - **Adapters** – Keep CLI/UI/network adapters thin; they translate I/O into domain commands without mixing presentation logic into rules.
+- **Unified Player Interface** – Expose a single Player Action API that both human clients and AI agents implement so the engine remains agnostic to who controls each seat.
 
 ## Coding Standards
 
