@@ -5,6 +5,7 @@ import { registerCardForPlayer, drawCard } from './deck';
 import { GameState } from '../state/state';
 import { makePlayerId } from '../primitives/id';
 import { createOrderedStack } from '../primitives/ordered-stack';
+import { createInitialTurnState } from '../turn/turn-state';
 
 describe('deck utilities', () => {
   const testCardDefinition: CardDefinition = defineCard({
@@ -32,7 +33,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       const result = registerCardForPlayer(
@@ -81,7 +84,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerOneId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       const afterPlayerOne = registerCardForPlayer(
@@ -127,7 +132,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       expect(() => {
@@ -153,7 +160,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       const withCards = registerCardForPlayer(
@@ -189,7 +198,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       expect(() => {
@@ -204,7 +215,9 @@ describe('deck utilities', () => {
         cards: {},
         cardDefinitions: {},
         stack: createOrderedStack(),
-        isKillSwitchTriggered: false,
+        turn: createInitialTurnState(playerId),
+        gameEnded: false,
+        playersWhoPassedPriority: new Set(),
       };
 
       expect(() => {

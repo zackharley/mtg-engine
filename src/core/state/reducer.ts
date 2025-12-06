@@ -6,6 +6,7 @@ import { GameState } from './state';
 import handleDrawCard from './handlers/draw-card';
 import handlePlayLand from './handlers/play-land';
 import handleTapPermanentForMana from './handlers/tap-permanent-for-mana';
+import handleAdvanceToNextStep from './handlers/advance-to-next-step';
 import { ManaColor } from '../costs/mana-costs';
 
 export interface ReduceContext {
@@ -15,6 +16,14 @@ export interface ReduceContext {
 }
 
 type ZoneName = 'hand' | 'battlefield' | 'graveyard' | 'library' | 'stack';
+
+export type AvailablePlayerDecision =
+  | { type: 'DRAW_CARD' }
+  | { type: 'CAST_SPELL'; cardId: CardId; targets?: TargetId[] }
+  | { type: 'PLAY_LAND'; cardId: CardId }
+  | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
+  | { type: 'PASS' }
+  | { type: 'END_GAME' };
 
 export type GameEvent =
   | {
@@ -35,7 +44,12 @@ export type GameEvent =
       amount: number;
     }
   | { type: 'LIFE_GAINED'; playerId: PlayerId; amount: number }
-  | { type: 'KILL_SWITCH_TRIGGERED'; reason: string };
+  | { type: 'KILL_SWITCH_TRIGGERED'; reason: string }
+  | {
+      type: 'PLAYER_DECISION_REQUESTED';
+      playerId: PlayerId;
+      availableDecisions: AvailablePlayerDecision[];
+    };
 
 export type GameAction =
   | {
@@ -75,6 +89,10 @@ export function reduce(
     }
     case 'TAP_PERMANENT_FOR_MANA': {
       handleTapPermanentForMana(ctx, action);
+      break;
+    }
+    case 'ADVANCE_TO_NEXT_STEP': {
+      handleAdvanceToNextStep(ctx, action);
       break;
     }
   }

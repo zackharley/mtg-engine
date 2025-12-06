@@ -12,7 +12,7 @@ const testCard = defineCard({
 
 describe('game harness', () => {
   it('builds an initial game state from player settings', () => {
-    const { state, playerIds } = createGame({
+    const { controller, playerIds } = createGame({
       startingLife: 25,
       players: [
         { life: 22, deck: [{ definition: testCard, count: 2 }] },
@@ -22,6 +22,9 @@ describe('game harness', () => {
 
     expect(playerIds).toHaveLength(2);
 
+    const state = controller.getState();
+
+    expect(controller.isWaitingForDecision()).toBe(true);
     const [playerOne, playerTwo] = playerIds;
     expect(state.players[playerOne].life).toBe(22);
     expect(state.players[playerTwo].life).toBe(25);
@@ -32,5 +35,12 @@ describe('game harness', () => {
     expect(state.players[playerTwo].library).toHaveLength(1);
 
     expect(state.cardDefinitions[testCard.id]).toBeDefined();
+
+    // Verify turn state is initialized
+    expect(state.turn.activePlayerId).toBe(playerOne);
+    expect(state.turn.turnNumber).toBe(1);
+    expect(state.turn.landPlayedThisTurn).toBe(0);
+
+    expect(state.playersWhoPassedPriority.size).toBe(0);
   });
 });

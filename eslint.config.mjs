@@ -79,6 +79,17 @@ export default defineConfig(
       ],
       'max-depth': ['warn', 4],
       'max-params': ['warn', 4],
+      '@typescript-eslint/no-magic-numbers': [
+        'warn',
+        {
+          ignore: [-1, 0, 1, 2],
+          ignoreArrayIndexes: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+        },
+      ],
 
       // Functional programming preferences
       'prefer-arrow-callback': 'warn',
@@ -124,6 +135,7 @@ export default defineConfig(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'max-lines-per-function': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
     },
   },
   {

@@ -4,6 +4,7 @@ import { payManaCost } from '../../costs/pay-mana';
 import { pushOrderedStack } from '../../primitives/ordered-stack';
 import { makeStackObjectId } from '../../primitives/id';
 import { SpellAbility } from '../../card/card';
+import { resetPriorityPasses } from '../../priority/priortity';
 
 export function handleCastSpell(
   ctx: ReduceContext,
@@ -35,6 +36,9 @@ export function handleCastSpell(
 
   // Pay mana cost
   ctx.state = payManaCost(state, playerId, cardDefinition.manaCost);
+
+  // Reset priority passes when a player takes an action (rule 117.3c)
+  ctx.state = resetPriorityPasses(ctx.state);
 
   const stackObjectId = makeStackObjectId();
   const stackObject = {

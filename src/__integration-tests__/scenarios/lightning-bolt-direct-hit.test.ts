@@ -35,13 +35,8 @@ type ScriptedAction =
       playerId: string;
       cardId: string;
     }
-  | {
-    type: 'TAP_FOR_MANA';
-    playerId: string;
-    cardId: string;
-  }
-  | { type: 'CAST_SPELL'; casterId: string; cardId: string; targets: string[] }
-  | { type: 'RESOLVE_STACK' };
+  | { type: 'TAP_FOR_MANA'; playerId: string; cardId: string }
+  | { type: 'CAST_SPELL'; casterId: string; cardId: string; targets: string[] };
 
 interface ScenarioResult {
   finalState: GameState;
@@ -105,7 +100,6 @@ describe('Lightning Bolt direct hit', () => {
           cardId: lightningBoltCardId,
           targets: [playerTwoId],
         },
-        { type: 'RESOLVE_STACK' },
       ],
     });
 
@@ -185,12 +179,6 @@ async function runScriptedScenario(
       });
       state = result.state;
       allEvents.push(...mapGameEventsToIntegrationEvents(result.events));
-    } else if (action.type === 'RESOLVE_STACK') {
-      const engineResult = applyPlayerDecision(state, {
-        type: 'ADVANCE_GAME',
-      });
-      state = engineResult.state;
-      allEvents.push(...mapGameEventsToIntegrationEvents(engineResult.events));
     }
   }
 
