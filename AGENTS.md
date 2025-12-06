@@ -5,6 +5,7 @@
 - Deliver a reusable TypeScript game engine for Magic: The Gathering that favors clarity, composability, and exhaustive test coverage over premature optimization.
 - Model rule objects (cards, zones, stack, turn structure) as small, composable modules rather than giant inheritance trees.
 - Encourage a culture of incremental TDD using Jest so every card interaction is documented through tests first.
+- IMPORTANT: Game reference material exists in `./reference/*`. This includes a comprehensive rule guide.
 
 ## Core Principles
 
