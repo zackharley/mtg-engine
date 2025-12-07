@@ -31,6 +31,42 @@ export function createTestPlayer(_playerId: PlayerId) {
   };
 }
 
+type TestPlayerState = ReturnType<typeof createTestPlayer>;
+
+function createPlayersForTest(
+  numPlayers: number,
+  primaryPlayerId: PlayerId,
+): Record<PlayerId, TestPlayerState> {
+  const players: Record<PlayerId, TestPlayerState> = {};
+
+  for (let i = 0; i < numPlayers; i++) {
+    const playerId = i === 0 ? primaryPlayerId : makePlayerId();
+    players[playerId] = createTestPlayer(playerId);
+  }
+
+  return players;
+}
+
+function mergeStateWithOverrides(
+  defaultState: GameState,
+  overrides: DeepPartial<GameState> | undefined,
+): GameState {
+  if (!overrides) {
+    return defaultState;
+  }
+
+  if (overrides.players) {
+    const { players: overriddenPlayers, ...restOverrides } = overrides;
+    return {
+      ...defaultState,
+      ...restOverrides,
+      players: overriddenPlayers as Record<PlayerId, TestPlayerState>,
+    } as GameState;
+  }
+
+  return merge({}, defaultState, overrides);
+}
+
 /**
  * Creates a test card with default values.
  */
@@ -61,13 +97,7 @@ export function createTestContext(options?: {
 }): ReduceContext {
   const id = options?.playerId ?? makePlayerId();
   const numPlayers = options?.numPlayers ?? 2;
-  const players: Record<PlayerId, ReturnType<typeof createTestPlayer>> = {};
-
-  // Create the requested number of players
-  for (let i = 0; i < numPlayers; i++) {
-    const playerId = i === 0 ? id : makePlayerId();
-    players[playerId] = createTestPlayer(playerId);
-  }
+  const players = createPlayersForTest(numPlayers, id);
 
   const defaultState: GameState = {
     players,
@@ -80,23 +110,7 @@ export function createTestContext(options?: {
     rng: createSeededRng(options?.seed),
   };
 
-  // If players are explicitly overridden, replace the entire players object instead of merging
-  let state: GameState;
-  if (options?.overrides?.players) {
-    const { players: overriddenPlayers, ...restOverrides } = options.overrides;
-    state = {
-      ...defaultState,
-      ...restOverrides,
-      players: overriddenPlayers as Record<
-        PlayerId,
-        ReturnType<typeof createTestPlayer>
-      >,
-    } as GameState;
-  } else {
-    state = options?.overrides
-      ? merge({}, defaultState, options.overrides)
-      : defaultState;
-  }
+  const state = mergeStateWithOverrides(defaultState, options?.overrides);
 
   const events: GameEvent[] = [];
   return {

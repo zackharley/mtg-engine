@@ -48,7 +48,7 @@ const isManaColor = (value: string): value is ManaColor => {
 
 const isNumeric = (value: string): boolean => /^\d+$/.test(value);
 
-function parsePip(token: string, originalToken: string): ManaPip {
+function parseSimplePip(token: string): ManaPip | null {
   if (isNumeric(token)) {
     return { kind: 'GENERIC', amount: Number(token) };
   }
@@ -69,29 +69,44 @@ function parsePip(token: string, originalToken: string): ManaPip {
     return { type: 'X' };
   }
 
+  return null;
+}
+
+function parseHybridPip(token: string, originalToken: string): ManaPip {
+  const pieces = token.split('/');
+  if (pieces.length !== 2) {
+    throw new Error(`Unknown mana pip: ${originalToken}`);
+  }
+
+  const [first, second] = pieces;
+
+  if (isManaColor(first) && isManaColor(second)) {
+    return { kind: 'HYBRID_COLORED', colors: [first, second] };
+  }
+
+  if (isNumeric(first) && isManaColor(second)) {
+    return {
+      kind: 'HYBRID_2_COLOR',
+      genericAmount: Number(first),
+      color: second,
+    };
+  }
+
+  if (isManaColor(first) && second === 'P') {
+    return { type: 'PHYREXIAN', color: first };
+  }
+
+  throw new Error(`Unknown mana pip: ${originalToken}`);
+}
+
+function parsePip(token: string, originalToken: string): ManaPip {
+  const simplePip = parseSimplePip(token);
+  if (simplePip !== null) {
+    return simplePip;
+  }
+
   if (token.includes('/')) {
-    const pieces = token.split('/');
-    if (pieces.length !== 2) {
-      throw new Error(`Unknown mana pip: ${originalToken}`);
-    }
-
-    const [first, second] = pieces;
-
-    if (isManaColor(first) && isManaColor(second)) {
-      return { kind: 'HYBRID_COLORED', colors: [first, second] };
-    }
-
-    if (isNumeric(first) && isManaColor(second)) {
-      return {
-        kind: 'HYBRID_2_COLOR',
-        genericAmount: Number(first),
-        color: second,
-      };
-    }
-
-    if (isManaColor(first) && second === 'P') {
-      return { type: 'PHYREXIAN', color: first };
-    }
+    return parseHybridPip(token, originalToken);
   }
 
   throw new Error(`Unknown mana pip: ${originalToken}`);

@@ -1,5 +1,6 @@
 import type { GameController } from '../../core/engine/game-controller';
 import type { PlayerId } from '../../core/primitives/id';
+import type { GameState } from '../../core/state/state';
 import type { Phase, Step } from '../../core/turn/turn-structure';
 
 /**
@@ -29,44 +30,24 @@ export function passUntilPhaseStep(
   while (iterations < maxIterations) {
     const state = controller.getState();
 
-    // Check if we've reached the target phase and step
-    const phaseMatches = state.turn.phase === targetPhase;
-    const stepMatches = state.turn.step === targetStep;
-
-    // If activePlayerId is specified, also check that the active player matches
-    const playerMatches =
-      activePlayerId === undefined ||
-      state.turn.activePlayerId === activePlayerId;
-
-    if (phaseMatches && stepMatches && playerMatches) {
-      return; // Successfully reached target
+    if (hasReachedTarget(state, targetPhase, targetStep, activePlayerId)) {
+      return;
     }
 
-    // If waiting for a decision, provide it
-    if (controller.isWaitingForDecision()) {
-      const playerNeedingDecision = controller.getPlayerNeedingDecision();
-      if (playerNeedingDecision) {
-        controller.provideDecision({ type: 'PASS_PRIORITY' });
-        iterations++;
-        continue;
-      }
+    if (handleDecisionIfWaiting(controller)) {
+      iterations++;
+      continue;
     }
 
-    // If not waiting for decision, the engine might be processing
-    // Give it a moment by checking again (the engine loop should handle this)
-    // But if we've made no progress, something might be wrong
     if (iterations === 0) {
       throw new Error(
         'Engine is not waiting for decision and target phase/step not reached',
       );
     }
 
-    // If we've made some progress but target not reached, continue
-    // (engine might be processing turn-based actions)
     iterations++;
   }
 
-  // If we get here, we've exceeded max iterations
   const finalState = controller.getState();
   throw new Error(
     `Failed to reach target phase/step after ${maxIterations} iterations. ` +
@@ -74,4 +55,33 @@ export function passUntilPhaseStep(
       `Current: ${finalState.turn.phase}/${finalState.turn.step} (active player: ${finalState.turn.activePlayerId}), ` +
       `Waiting for decision: ${controller.isWaitingForDecision()}`,
   );
+}
+
+function hasReachedTarget(
+  state: GameState,
+  targetPhase: Phase,
+  targetStep: Step | null | undefined,
+  activePlayerId: PlayerId | undefined,
+): boolean {
+  const phaseMatches = state.turn.phase === targetPhase;
+  const stepMatches = state.turn.step === targetStep;
+  const playerMatches =
+    activePlayerId === undefined ||
+    state.turn.activePlayerId === activePlayerId;
+
+  return phaseMatches && stepMatches && playerMatches;
+}
+
+function handleDecisionIfWaiting(controller: GameController): boolean {
+  if (!controller.isWaitingForDecision()) {
+    return false;
+  }
+
+  const playerNeedingDecision = controller.getPlayerNeedingDecision();
+  if (playerNeedingDecision) {
+    controller.provideDecision({ type: 'PASS_PRIORITY' });
+    return true;
+  }
+
+  return false;
 }

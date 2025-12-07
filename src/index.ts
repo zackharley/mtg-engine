@@ -125,10 +125,54 @@ export function createGame(settings: GameSettings): {
   };
 }
 
+type PlayerState = GameState['players'][PlayerId];
+
 /**
  * Initializes players in the game state, creating player records and registering their decks.
  * Returns the updated state and array of player IDs.
  */
+function createPlayerState(
+  playerConfig: PlayerSettings,
+  index: number,
+  defaultLife: number,
+  defaultManaPool: ManaPool,
+): { playerId: PlayerId; playerState: PlayerState } {
+  const playerId = playerConfig.id ?? makePlayerId();
+  const playerName = playerConfig.name ?? `Player ${index + 1}`;
+
+  const playerState: PlayerState = {
+    name: playerName,
+    life: playerConfig.life ?? defaultLife,
+    manaPool: { ...defaultManaPool },
+    hand: [],
+    battlefield: [],
+    graveyard: createOrderedStack(),
+    library: createOrderedStack(),
+    commandZone: [],
+  };
+
+  return { playerId, playerState };
+}
+
+function registerPlayerDeck(
+  state: GameState,
+  playerId: PlayerId,
+  deck: DeckEntry[],
+  commander: CardDefinition | undefined,
+): GameState {
+  return deck.reduce((currentState, entry) => {
+    if (commander && entry.definition.id === commander.id) {
+      return currentState;
+    }
+    return registerCardForPlayer(
+      currentState,
+      playerId,
+      entry.definition,
+      entry.count,
+    );
+  }, state);
+}
+
 function initializePlayers(
   state: GameState,
   playerConfigs: PlayerSettings[],
@@ -140,54 +184,37 @@ function initializePlayers(
 } {
   return playerConfigs.reduce(
     (acc, playerConfig, index) => {
+      const { playerId, playerState } = createPlayerState(
+        playerConfig,
+        index,
+        defaultLife,
+        defaultManaPool,
+      );
+
       const updatedState = {
         ...acc.state,
-        players: { ...acc.state.players },
+        players: { ...acc.state.players, [playerId]: playerState },
       };
 
-      const playerId = playerConfig.id ?? makePlayerId();
-      const playerIds = [...acc.playerIds, playerId];
-      const playerName = playerConfig.name ?? `Player ${index + 1}`;
+      const stateWithCommander = playerConfig.commander
+        ? registerCommanderInCommandZone(
+            updatedState,
+            playerId,
+            playerConfig.commander,
+          )
+        : updatedState;
 
-      updatedState.players[playerId] = {
-        name: playerName,
-        life: playerConfig.life ?? defaultLife,
-        manaPool: { ...defaultManaPool },
-        hand: [],
-        battlefield: [],
-        graveyard: createOrderedStack(),
-        library: createOrderedStack(),
-        commandZone: [],
+      const stateWithDeck = registerPlayerDeck(
+        stateWithCommander,
+        playerId,
+        playerConfig.deck,
+        playerConfig.commander,
+      );
+
+      return {
+        state: stateWithDeck,
+        playerIds: [...acc.playerIds, playerId],
       };
-
-      // Register commander in command zone if present
-      let stateWithCommander = updatedState;
-      if (playerConfig.commander) {
-        stateWithCommander = registerCommanderInCommandZone(
-          updatedState,
-          playerId,
-          playerConfig.commander,
-        );
-      }
-
-      // Register deck cards (excluding commander if it was in the deck)
-      const stateWithDeck = playerConfig.deck.reduce((currentState, entry) => {
-        // Skip commander if it's in the deck list (it's already in command zone)
-        if (
-          playerConfig.commander &&
-          entry.definition.id === playerConfig.commander.id
-        ) {
-          return currentState;
-        }
-        return registerCardForPlayer(
-          currentState,
-          playerId,
-          entry.definition,
-          entry.count,
-        );
-      }, stateWithCommander);
-
-      return { state: stateWithDeck, playerIds };
     },
     {
       state,

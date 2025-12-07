@@ -38,12 +38,118 @@
 
 ## System Architecture
 
-- **Game State Core** – Contains immutable structures for zones, stack, mana, players. Use factories + object freezes to model snapshots; use command handlers to produce next state.
-- **Rule Modules** – Encapsulate Comprehensive Rule sections (casting, priority, combat, replacement/prevention effects). Expose pure evaluators returning intents.
-- **Effect Pipelines** – Compose card abilities from effect primitives (targeting, filtering, resolving) chained by higher-order helpers.
-- **Event Bus** – Publish structured events (`SpellCast`, `TriggerCreated`, `StateBasedAction`) to support logging and UI; keep event types strongly typed.
-- **Adapters** – Keep CLI/UI/network adapters thin; they translate I/O into domain commands without mixing presentation logic into rules.
-- **Unified Player Interface** – Expose a single Player Action API that both human clients and AI agents implement so the engine remains agnostic to who controls each seat.
+### Core Components
+
+- **Reducer Pattern** (`@/core/state/reducer.ts`) – Central `reduce` function dispatches `GameAction` (discriminated union) to appropriate handler functions. All state changes flow through this single entry point.
+- **Handler Functions** (`@/core/state/handlers/`) – Pure functions that receive `ReduceContext` and modify state immutably using immer's `produce`. Each handler corresponds to a specific `GameAction` type (e.g., `handleCastSpell`, `handleResolveTopOfStack`).
+- **ReduceContext Pattern** – Context object passed to handlers containing:
+  - `state: GameState` – Deep-cloned current game state (via `cloneDeep`)
+  - `events: GameEvent[]` – Array of events emitted during the action
+  - `emit(event: GameEvent): void` – Function to emit events for side effects
+- **Decision Pipeline** (`@/core/actions/available-decisions.ts`) – Composable functions in `DECISION_PIPELINE` array that determine available player decisions. Each function (`addCastSpellDecisions`, `addPlayLandDecisions`, etc.) takes state, playerId, and current decisions array, returning an updated decisions array using immer internally.
+- **Game Loop** (`@/core/engine/engine.ts`) – `runGame` function processes engine actions (`ADVANCE_TO_NEXT_STEP`, `RESOLVE_TOP_OF_STACK`) automatically until a player decision is needed or the game ends. Returns `RunGameResult` indicating whether a decision is needed.
+- **GameController** (`@/core/engine/game-controller.ts`) – Main interface (`createGameController`) that wraps the game loop and manages player decisions. Provides methods: `getState()`, `getAvailableDecisions()`, `provideDecision()`, `onEvents()`. Converts `PlayerDecision` to `GameAction` and continues the loop.
+- **Event System** – Handlers emit typed `GameEvent` objects (discriminated union) for observability. Events include `SPELL_CAST`, `SPELL_RESOLVED`, `CARD_MOVED`, `MANA_ADDED`, `PLAYER_DECISION_REQUESTED`, etc. Event callbacks can be registered via `controller.onEvents()`.
+- **Card Definition System** (`@/core/card/card.ts`) – Declarative card structure using `defineCard()` factory. Cards have `abilities` array where each ability has an `effect` function that receives `ReduceContext` and `AbilityEffectArgs`. Supports spell, activated, triggered, and static abilities.
+- **Turn Structure** (`@/core/turn/`) – Manages phases, steps, and turn-based actions. `phase-advancement.ts` determines when to advance; `turn-based-actions.ts` executes automatic actions (draw, untap); `turn-structure.ts` defines phase/step enums and relationships.
+- **Priority System** (`@/core/priority/priortity.ts`) – Tracks which players have passed priority. `getNextPlayerWithPriority()` determines who receives priority next. Priority resets when a player takes an action (rule 117.3c).
+
+## Architecture Patterns
+
+### State Management with Immer
+
+All state mutations use `produce` from immer for immutable updates:
+
+```typescript
+ctx.state = produce(ctx.state, (draft) => {
+  draft.players[playerId].manaPool[color] += amount;
+});
+```
+
+Handlers receive a `ReduceContext` with a deep-cloned state (`cloneDeep`), allowing safe mutation within `produce` blocks. The context pattern ensures handlers don't leak mutable references.
+
+### Handler Pattern
+
+Handlers are pure functions that:
+
+1. Receive `ReduceContext` and a specific `GameAction` type
+2. Validate preconditions (throw errors for invalid state)
+3. Mutate state via `produce` blocks
+4. Emit events via `ctx.emit()` for side effects
+5. Return `void` (mutations happen on `ctx.state`)
+
+Example:
+
+```typescript
+export function handleCastSpell(
+  ctx: ReduceContext,
+  action: Extract<GameAction, { type: 'CAST_SPELL' }>,
+): void {
+  // Validate, mutate state, emit events
+}
+```
+
+### Decision Pipeline Pattern
+
+Decision functions compose in a pipeline using `reduce`:
+
+```typescript
+const DECISION_PIPELINE: DecisionFunction[] = [
+  addPlayLandDecisions,
+  addCastSpellDecisions,
+  addTapPermanentForManaDecisions,
+  addPassPriorityDecisions,
+  addEndGameDecisions,
+];
+```
+
+Each function uses `produce` internally for immutable updates, making them self-contained and testable in isolation.
+
+### Action and Event Types
+
+Both `GameAction` and `GameEvent` use discriminated unions for type-safe dispatching:
+
+```typescript
+type GameAction =
+  | {
+      type: 'CAST_SPELL';
+      playerId: PlayerId;
+      cardId: CardId;
+      targets?: TargetId[];
+    }
+  | { type: 'RESOLVE_TOP_OF_STACK' }
+  | { type: 'ADVANCE_TO_NEXT_STEP' };
+// ...
+```
+
+The `type` field enables exhaustive pattern matching in switch statements and type narrowing.
+
+### Game Loop Flow
+
+1. `runGame()` calls `nextEngineAction()` to determine if an automatic action is needed
+2. If engine action exists (e.g., `ADVANCE_TO_NEXT_STEP`), reduce it and continue loop
+3. If no engine action, determine next player with priority and request decision
+4. GameController converts `PlayerDecision` to `GameAction`, reduces it, then continues loop
+5. Loop continues until game ends or player decision needed
+
+## File Structure
+
+- `src/core/state/` – State management: `reducer.ts` (dispatch), `state.ts` (GameState type, `nextEngineAction`), `handlers/` (action handlers)
+- `src/core/actions/` – Decision system: `available-decisions.ts` (pipeline), `decisions/` (individual decision functions)
+- `src/core/engine/` – Game loop: `engine.ts` (`runGame`), `game-controller.ts` (GameController interface)
+- `src/core/turn/` – Turn management: `turn-structure.ts` (phases/steps), `phase-advancement.ts` (advancement logic), `turn-based-actions.ts` (automatic actions), `turn-state.ts` (turn state type)
+- `src/core/card/` – Card system: `card.ts` (CardDefinition, abilities), `move-card.ts` (zone transitions)
+- `src/core/costs/` – Mana system: `mana-costs.ts` (cost parsing), `mana-pool.ts` (pool management), `pay-mana.ts` (cost payment)
+- `src/core/priority/` – Priority tracking: `priortity.ts` (priority management functions)
+- `src/core/deck/` – Deck management: `deck.ts` (deck registration, shuffling, drawing)
+- `src/core/primitives/` – Core types: `id.ts` (ID generation), `ordered-stack.ts` (stack data structure)
+- `src/core/random/` – Random number generation: `random.ts` (seeded RNG)
+- `src/core/stack/` – Stack data structure: `stack.ts` (StackObject type)
+- `src/core/game-modes/` – Game mode system: `types.ts` (GameMode interface), `commander.ts` (Commander mode)
+- `src/card-definitions/` – Declarative card definitions (e.g., `lightning-bolt/card.ts`, `mountain/card.ts`)
+- `src/__integration-tests__/` – Integration tests: `rules/` (rule compliance), `scenarios/` (end-to-end scenarios)
+- `src/__tests__/` – Shared test utilities: `test-utils.ts`
+- `src/index.ts` – Public API: `createGame()`, `GameController`, `GameSettings`
 
 ## Coding Standards
 
@@ -54,6 +160,28 @@
 - Maintain a shared vocabulary for card components (`Permanent`, `Spell`, `Ability`, `Effect`) to avoid synonyms that confuse readers.
 - **Never use barrel files** (index.ts files that only re-export) – they can cause performance issues with tree-shaking and module resolution. Import directly from source files instead.
 - **Use `@` path alias for imports** – Prefer `@/core/random/random` over relative paths like `../../core/random/random` for cleaner, more maintainable imports. The `@` alias maps to the `src` directory root.
+
+### Handler Conventions
+
+- Handlers must be pure functions receiving `ReduceContext` and a specific `GameAction` type
+- Use `produce` from immer for all state mutations – never mutate `ctx.state` directly
+- Emit events via `ctx.emit()` for side effects (logging, UI updates, triggers)
+- Validate preconditions at the start and throw descriptive errors for invalid state
+- Use `Extract<GameAction, { type: 'ACTION_TYPE' }>` for type-safe action extraction
+
+### Decision Function Conventions
+
+- Decision functions should use `produce` internally for immutable updates
+- Each function takes `(state, playerId, decisions)` and returns updated decisions array
+- Functions should be composable and testable in isolation
+- Use descriptive names: `addCastSpellDecisions`, `addPlayLandDecisions`, etc.
+
+### State Mutation Guidelines
+
+- Always use `produce` from immer – this ensures immutability and enables time-travel debugging
+- Deep clone state in `makeContext()` using `cloneDeep` to prevent accidental mutations
+- Never mutate `ctx.state` outside of `produce` blocks
+- Return new state from helper functions (e.g., `payManaCost` returns new state)
 
 ## Testing Playbook
 
