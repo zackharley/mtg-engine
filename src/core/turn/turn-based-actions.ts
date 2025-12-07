@@ -99,4 +99,3 @@ function emptyManaPools(state: GameState): GameState {
     }
   });
 }
-

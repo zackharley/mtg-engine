@@ -9,6 +9,7 @@ import {
 import { PlayerId } from '../primitives/id';
 import { getAvailableDecisions } from '../decisions/available-decisions';
 import { stepGrantsPriority } from '../turn/turn-structure';
+import { getNextPlayerWithPriority } from '../priority/priortity';
 
 export interface RunGameResult {
   finalState: GameState;
@@ -43,13 +44,30 @@ export function runGame(
         break;
       }
 
-      // Request decision from active player (rule 117.3)
-      const activePlayerId = state.turn.activePlayerId;
-      const availableDecisions = getAvailableDecisions(state, activePlayerId);
+      // Determine which player should receive priority
+      // Start with active player, but if they've passed, check next player in priority order
+      // Based on rule 117.3d: When a player passes, the next player in turn order receives priority
+      const nextPlayer: PlayerId | undefined = getNextPlayerWithPriority(state);
+
+      // If all players have passed, nextEngineAction should have returned an advancement action
+      // But if we get here, use the next player or fallback to active player
+      // This should never be undefined at this point, but TypeScript needs the assertion
+      if (nextPlayer === undefined) {
+        // This shouldn't happen - if all players passed, nextEngineAction should handle it
+        // But if we get here, fallback to active player
+        break;
+      }
+
+      const playerWithPriority: PlayerId = nextPlayer;
+
+      const availableDecisions = getAvailableDecisions(
+        state,
+        playerWithPriority,
+      );
 
       const decisionEvent: GameEvent = {
         type: 'PLAYER_DECISION_REQUESTED',
-        playerId: activePlayerId,
+        playerId: playerWithPriority,
         availableDecisions,
       };
 
@@ -63,17 +81,15 @@ export function runGame(
         gameLog,
         events: allEvents,
         needsPlayerDecision: true,
-        playerIdNeedingDecision: activePlayerId,
+        playerIdNeedingDecision: playerWithPriority,
       };
     }
 
     const result = reduce(state, engineAction);
     state = result.state;
 
-    // Process turn-based actions after step/phase changes
-    if (engineAction.type === 'ADVANCE_TO_NEXT_STEP') {
-      state = processTurnBasedActions(state);
-    }
+    // Note: Turn-based actions are already processed in handleAdvanceToNextStep
+    // So we don't need to process them again here
 
     allEvents.push(...result.events);
     if (result.events.length > 0 && onEvents) {

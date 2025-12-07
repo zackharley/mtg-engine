@@ -93,6 +93,9 @@ export function getAvailableDecisions(
   // Always allow passing
   decisions.push({ type: 'PASS' });
 
+  // Always allow passing priority explicitly
+  decisions.push({ type: 'PASS_PRIORITY' });
+
   // Allow ending the game (for testing/debugging)
   decisions.push({ type: 'END_GAME' });
 

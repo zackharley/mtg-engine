@@ -22,12 +22,14 @@ describe('deck utilities', () => {
       const initialState: GameState = {
         players: {
           [playerId]: {
+            name: 'Test Player',
             life: 20,
             manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
             hand: [],
             battlefield: [],
             graveyard: createOrderedStack(),
             library: createOrderedStack(),
+            commandZone: [],
           },
         },
         cards: {},
@@ -65,20 +67,24 @@ describe('deck utilities', () => {
       const initialState: GameState = {
         players: {
           [playerOneId]: {
+            name: 'Player One',
             life: 20,
             manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
             hand: [],
             battlefield: [],
             graveyard: createOrderedStack(),
             library: createOrderedStack(),
+            commandZone: [],
           },
           [playerTwoId]: {
+            name: 'Player Two',
             life: 20,
             manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
             hand: [],
             battlefield: [],
             graveyard: createOrderedStack(),
             library: createOrderedStack(),
+            commandZone: [],
           },
         },
         cards: {},
@@ -149,12 +155,14 @@ describe('deck utilities', () => {
       const initialState: GameState = {
         players: {
           [playerId]: {
+            name: 'Test Player',
             life: 20,
             manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
             hand: [],
             battlefield: [],
             graveyard: createOrderedStack(),
             library: createOrderedStack(),
+            commandZone: [],
           },
         },
         cards: {},
@@ -187,12 +195,14 @@ describe('deck utilities', () => {
       const initialState: GameState = {
         players: {
           [playerId]: {
+            name: 'Test Player',
             life: 20,
             manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
             hand: [],
             battlefield: [],
             graveyard: createOrderedStack(),
             library: createOrderedStack(),
+            commandZone: [],
           },
         },
         cards: {},

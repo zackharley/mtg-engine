@@ -11,6 +11,7 @@ export type PlayerDecision =
   | { type: 'PLAY_LAND'; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
   | { type: 'PASS' }
+  | { type: 'PASS_PRIORITY' }
   | { type: 'END_GAME' };
 
 export interface GameController {
@@ -62,6 +63,14 @@ export function createGameController(initialState: GameState): GameController {
           cardId: decision.cardId,
         });
       case 'PASS': {
+        // Mark player as having passed priority
+        const updatedState = markPlayerPassedPriority(state, playerId);
+        return {
+          state: updatedState,
+          events: [],
+        };
+      }
+      case 'PASS_PRIORITY': {
         // Mark player as having passed priority
         const updatedState = markPlayerPassedPriority(state, playerId);
         return {

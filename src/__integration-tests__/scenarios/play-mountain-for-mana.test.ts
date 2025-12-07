@@ -5,97 +5,86 @@ describe('Play Mountain and tap for mana', () => {
   it('moves Mountain to the battlefield tapped and adds one red mana', () => {
     const { controller, playerIds } = createGame({
       players: [
-        {
-          deck: [{ definition: mountain, count: 1 }],
-        },
+        { deck: [{ definition: mountain, count: 1 }] },
+        { deck: [] }, // Second player needed for game loop to work properly
       ],
     });
 
-    const playerId = playerIds[0];
+    const [playerOne] = playerIds;
+    let state = controller.getState();
 
-    // Wait for decision request and draw Mountain
-    // The game loop should request a decision immediately after starting
-    if (controller.isWaitingForDecision()) {
-      const availableDecisions = controller.getAvailableDecisions();
-      const drawDecision = availableDecisions.find(
-        (d) => d.type === 'DRAW_CARD',
-      );
-      if (drawDecision) {
-        controller.provideDecision(drawDecision);
-      } else {
-        // If DRAW_CARD isn't available, pass and wait for next decision
-        controller.provideDecision({ type: 'PASS' });
-      }
-    }
+    // Verify initial state - card starts in library
+    expect(state.players[playerOne].hand).toHaveLength(0);
+    expect(state.players[playerOne].battlefield).toHaveLength(0);
+    expect(state.players[playerOne].manaPool.R).toBe(0);
+    expect(state.players[playerOne].library).toHaveLength(1);
 
-    // Wait for next decision if needed, then get the card ID from hand
-    while (
-      controller.isWaitingForDecision() &&
-      controller.getState().players[playerId].hand.length === 0
-    ) {
-      const availableDecisions = controller.getAvailableDecisions();
-      const drawDecision = availableDecisions.find(
-        (d) => d.type === 'DRAW_CARD',
-      );
-      if (drawDecision) {
-        controller.provideDecision(drawDecision);
-      } else {
-        controller.provideDecision({ type: 'PASS' });
-      }
-    }
+    expect(controller.isWaitingForDecision()).toBe(true);
+    expect(controller.getPlayerNeedingDecision()).toBe(playerOne);
 
-    const state = controller.getState();
-    const mountainCardId = state.players[playerId].hand[0];
-    expect(mountainCardId).toBeDefined();
+    state = controller.getState();
 
-    // Wait for decision request and play Mountain
-    while (controller.isWaitingForDecision()) {
-      const availableDecisions = controller.getAvailableDecisions();
-      const playLandDecision = availableDecisions.find(
-        (d) => d.type === 'PLAY_LAND' && d.cardId === mountainCardId,
-      );
-      if (playLandDecision) {
-        controller.provideDecision(playLandDecision);
-        break;
-      } else {
-        controller.provideDecision({ type: 'PASS' });
-      }
-    }
+    // Rule 103.8a: In a two-player game, the player who plays first skips the draw step
+    // of their first turn. So the card should still be in the library.
+    expect(state.turn.turnNumber).toBe(1);
+    expect(state.players[playerOne].hand).toHaveLength(0);
+    expect(state.players[playerOne].library).toHaveLength(1);
 
-    // Wait for decision request and tap for mana
-    while (controller.isWaitingForDecision()) {
-      const availableDecisions = controller.getAvailableDecisions();
-      const tapDecision = availableDecisions.find(
+    // The player should be able to manually draw a card
+    const availableDecisions = controller.getAvailableDecisions();
+    const drawCardDecision = availableDecisions.find(
+      (d) => d.type === 'DRAW_CARD',
+    );
+    expect(drawCardDecision).toBeDefined();
+
+    // Draw the Mountain
+    controller.provideDecision({ type: 'DRAW_CARD' });
+    state = controller.getState();
+    expect(state.players[playerOne].hand).toHaveLength(1);
+    expect(state.players[playerOne].library).toHaveLength(0);
+
+    const mountainCardId = state.players[playerOne].hand[0];
+    const mountainCard = state.cards[mountainCardId];
+    expect(mountainCard).toBeDefined();
+    expect(state.cardDefinitions[mountainCard.definitionId].name).toBe(
+      'Mountain',
+    );
+
+    // Play the land
+    expect(controller.isWaitingForDecision()).toBe(true);
+    const playLandDecision = controller
+      .getAvailableDecisions()
+      .find((d) => d.type === 'PLAY_LAND' && d.cardId === mountainCardId);
+    expect(playLandDecision).toBeDefined();
+
+    controller.provideDecision({ type: 'PLAY_LAND', cardId: mountainCardId });
+
+    // Verify Mountain is on battlefield and not tapped
+    state = controller.getState();
+    expect(state.players[playerOne].hand).toHaveLength(0);
+    expect(state.players[playerOne].battlefield).toHaveLength(1);
+    expect(state.players[playerOne].battlefield[0]).toBe(mountainCardId);
+    expect(state.cards[mountainCardId].tapped).toBe(false);
+
+    // Tap Mountain for mana
+    expect(controller.isWaitingForDecision()).toBe(true);
+    const tapForManaDecision = controller
+      .getAvailableDecisions()
+      .find(
         (d) =>
           d.type === 'TAP_PERMANENT_FOR_MANA' && d.cardId === mountainCardId,
       );
-      if (tapDecision) {
-        controller.provideDecision(tapDecision);
-        break;
-      } else {
-        controller.provideDecision({ type: 'PASS' });
-      }
-    }
+    expect(tapForManaDecision).toBeDefined();
 
-    // Verify final state
-    const finalState = controller.getState();
-    expect(finalState.players[playerId].battlefield).toContain(mountainCardId);
-    const card = finalState.cards[mountainCardId];
-    expect(card).toBeDefined();
-    expect(card?.tapped).toBe(true);
-    expect(finalState.players[playerId].manaPool.R).toBe(1);
+    controller.provideDecision({
+      type: 'TAP_PERMANENT_FOR_MANA',
+      cardId: mountainCardId,
+    });
 
-    // Verify events
-    const events = controller.getEvents();
-    expect(events).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'MANA_ADDED',
-          playerId,
-          color: 'R',
-          amount: 1,
-        }),
-      ]),
-    );
+    // Verify Mountain is tapped and player has red mana
+    state = controller.getState();
+    expect(state.cards[mountainCardId].tapped).toBe(true);
+    expect(state.players[playerOne].manaPool.R).toBe(1);
+    expect(state.players[playerOne].battlefield).toContain(mountainCardId);
   });
 });

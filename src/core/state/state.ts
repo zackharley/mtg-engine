@@ -15,19 +15,19 @@ export interface GameState {
   cardDefinitions: Record<CardDefinitionId, CardDefinition>;
   stack: Stack;
   turn: TurnState;
-  /** Set to true when a player explicitly ends the game */
   gameEnded: boolean;
-  /** Set of player IDs who have passed priority this round */
   playersWhoPassedPriority: Set<PlayerId>;
 }
 
 interface PlayerState {
+  name: string;
   life: number;
   manaPool: Record<ManaColor, number>;
   hand: CardId[];
   battlefield: CardId[];
   graveyard: OrderedStack<CardId>;
   library: OrderedStack<CardId>;
+  commandZone: CardId[];
 }
 
 export type ZoneName =
@@ -40,12 +40,10 @@ export type ZoneName =
   | 'command';
 
 export function isGameOver(state: GameState): boolean {
-  // Check if game was explicitly ended by a player
   if (state.gameEnded) {
     return true;
   }
 
-  // Check if only one player is left alive
   const players = Object.values(state.players);
   const alivePlayers = players.filter((player) => player.life > 0);
   if (alivePlayers.length === 1) {
@@ -61,7 +59,6 @@ export function isGameOver(state: GameState): boolean {
  * then triggered abilities, then players receive priority.
  */
 export function nextEngineAction(state: GameState): GameAction | null {
-  // Check if we should advance phase/step
   const advancementAction = createAdvancementAction(state);
   if (advancementAction) {
     return advancementAction;

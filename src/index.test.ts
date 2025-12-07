@@ -15,8 +15,8 @@ describe('game harness', () => {
     const { controller, playerIds } = createGame({
       startingLife: 25,
       players: [
-        { life: 22, deck: [{ definition: testCard, count: 2 }] },
-        { deck: [{ definition: testCard, count: 1 }] },
+        { name: 'Alice', life: 22, deck: [{ definition: testCard, count: 2 }] },
+        { name: 'Bob', deck: [{ definition: testCard, count: 1 }] },
       ],
     });
 

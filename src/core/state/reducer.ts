@@ -23,6 +23,7 @@ export type AvailablePlayerDecision =
   | { type: 'PLAY_LAND'; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
   | { type: 'PASS' }
+  | { type: 'PASS_PRIORITY' }
   | { type: 'END_GAME' };
 
 export type GameEvent =
