@@ -122,10 +122,12 @@ export function shuffleLibrary(
  * @param startingHandSize - Number of cards to draw (default: 7)
  * @returns Updated game state with cards drawn into player's hand
  */
+const DEFAULT_STARTING_HAND_SIZE = 7;
+
 export function drawInitialHand(
   state: GameState,
   playerId: PlayerId,
-  startingHandSize = 7,
+  startingHandSize = DEFAULT_STARTING_HAND_SIZE,
 ): GameState {
   const player = state.players[playerId];
   if (!player) {

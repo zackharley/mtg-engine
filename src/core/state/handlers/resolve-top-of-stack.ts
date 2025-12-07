@@ -29,7 +29,11 @@ export default function handleResolveTopOfStack(
 
   if (sourceCardId) {
     // Put instants/sorceries into graveyard for now
-    ctx.state = moveCard(ctx.state, sourceCardId, 'stack', 'graveyard');
+    ctx.state = moveCard(ctx.state, {
+      cardId: sourceCardId,
+      from: 'stack',
+      to: 'graveyard',
+    });
 
     ctx.emit({
       type: 'SPELL_RESOLVED',

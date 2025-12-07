@@ -4,6 +4,16 @@ import type { PlayerId } from '../primitives/id';
 import type { GameState } from '../state/state';
 import type { ManaColor, ManaCost } from './mana-costs';
 
+// ManaPip is not exported, so we define a local type for the helper
+type ManaPipWithKindOrType = { kind: string } | { type: string };
+
+function getPipIdentifier(pip: ManaPipWithKindOrType): string {
+  if ('kind' in pip) {
+    return pip.kind;
+  }
+  return pip.type;
+}
+
 type ManaPool = Record<ManaColor, number>;
 
 interface PayResult {
@@ -35,11 +45,9 @@ function applyCost(manaPool: ManaPool, cost: ManaCost): PayResult {
   let pool = { ...manaPool };
   let genericOwed = 0;
 
-  for (const pip of cost.pips) {
+  cost.pips.forEach((pip) => {
     if (!('kind' in pip)) {
-      throw new Error(
-        `Unsupported mana pip kind "${(pip as any).kind ?? (pip as any).type}"`,
-      );
+      throw new Error(`Unsupported mana pip kind "${getPipIdentifier(pip)}"`);
     }
 
     switch (pip.kind) {
@@ -63,12 +71,10 @@ function applyCost(manaPool: ManaPool, cost: ManaCost): PayResult {
         break;
       }
       default: {
-        throw new Error(
-          `Unsupported mana pip kind "${(pip as any).kind ?? (pip as any).type}"`,
-        );
+        throw new Error(`Unsupported mana pip kind "${getPipIdentifier(pip)}"`);
       }
     }
-  }
+  });
 
   if (genericOwed > 0) {
     pool = payGeneric(pool, genericOwed);

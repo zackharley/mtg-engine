@@ -2,15 +2,10 @@ import {
   createContextWithCardInHand,
   createTestContext,
 } from '@/__tests__/test-utils';
-import { registerCardForPlayer } from '@/core/deck/deck';
 
 import { defineCard } from '../../card/card';
 import { parseManaCost } from '../../costs/mana-costs';
-import {
-  makeCardDefinitionId,
-  makeCardId,
-  makePlayerId,
-} from '../../primitives/id';
+import { makeCardId, makePlayerId, type TargetId } from '../../primitives/id';
 import { handleCastSpell } from './cast-spell';
 
 describe('cast-spell', () => {
@@ -169,7 +164,7 @@ describe('cast-spell', () => {
         type: 'CAST_SPELL',
         playerId,
         cardId,
-        targets: ['target-1' as any],
+        targets: ['target-1' as TargetId],
       });
 
       expect(ctx.events.some((e) => e.type === 'SPELL_CAST')).toBe(true);

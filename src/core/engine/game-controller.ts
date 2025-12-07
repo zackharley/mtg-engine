@@ -94,15 +94,15 @@ export function createGameController(initialState: GameState): GameController {
   }
 
   // Process events and notify callbacks
-  function processEvents(events: GameEvent[], newState: GameState) {
+  function processEvents(events: GameEvent[], newState: GameState): void {
     allEvents.push(...events);
-    for (const callback of eventCallbacks) {
+    eventCallbacks.forEach((callback) => {
       callback(events, newState);
-    }
+    });
   }
 
   // Run the game loop
-  function continueGameLoop(startState: GameState) {
+  function continueGameLoop(startState: GameState): void {
     const result = runGame(startState, (evts, s) => {
       processEvents(evts, s);
     });

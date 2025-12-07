@@ -1,5 +1,7 @@
 import { parseManaCost } from '../costs/mana-costs';
 import type { ReduceContext } from '../state/reducer';
+import type { GameState } from '../state/state';
+import type { SpellAbility } from './card';
 import { defineCard } from './card';
 
 describe('defineCard ability modeling', () => {
@@ -29,16 +31,19 @@ describe('defineCard ability modeling', () => {
 
     expect(card.id).toMatch(/^card-/);
     expect(card.abilities).toHaveLength(1);
-    if (card.abilities[0].type === 'spell') {
-      expect(typeof card.abilities[0].targets).toBe('function');
-      const dummyCtx = {
-        state: {} as any,
-        events: [],
-        emit: () => undefined,
-      } as ReduceContext;
-      const targets = card.abilities[0].targets?.(dummyCtx);
-      expect(targets?.[0].validate).toBeDefined();
-    }
+    expect(card.abilities[0].type).toBe('spell');
+
+    const spellAbility = card.abilities[0] as SpellAbility;
+    expect(typeof spellAbility.targets).toBe('function');
+    const dummyCtx = {
+      state: {} as Partial<GameState> as GameState,
+      events: [],
+      emit: () => undefined,
+    } as ReduceContext;
+    const targets = spellAbility.targets?.(dummyCtx);
+    expect(targets).toBeDefined();
+    expect(targets?.[0]).toBeDefined();
+    expect(targets?.[0].validate).toBeDefined();
   });
 
   it('assigns ids to triggered abilities and their triggers', () => {

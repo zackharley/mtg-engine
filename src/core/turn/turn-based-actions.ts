@@ -53,12 +53,12 @@ function performUntapStep(state: GameState): GameState {
 
   return produce(state, (draft) => {
     // Untap all permanents controlled by active player
-    for (const cardId of player.battlefield) {
+    player.battlefield.forEach((cardId) => {
       const card = draft.cards[cardId];
       if (card) {
         card.tapped = false;
       }
-    }
+    });
   });
 }
 
@@ -106,11 +106,11 @@ function emptyManaPools(state: GameState): GameState {
   return produce(state, (draft) => {
     const manaColors: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
     const playerIds = Object.keys(draft.players) as PlayerId[];
-    for (const playerId of playerIds) {
+    playerIds.forEach((playerId) => {
       const player = draft.players[playerId];
-      for (const color of manaColors) {
+      manaColors.forEach((color) => {
         player.manaPool[color] = 0;
-      }
-    }
+      });
+    });
   });
 }

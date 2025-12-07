@@ -154,7 +154,7 @@ describe('Lightning Bolt direct hit', () => {
     expect(finalState.players[playerOneId].hand).not.toContain(
       lightningBoltCardId,
     );
-    console.log(JSON.stringify(allEvents, null, 2));
+
     expect(integrationEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

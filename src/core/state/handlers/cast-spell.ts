@@ -10,7 +10,7 @@ import type { GameAction, ReduceContext } from '../reducer';
 export function handleCastSpell(
   ctx: ReduceContext,
   action: Extract<GameAction, { type: 'CAST_SPELL' }>,
-) {
+): void {
   const { playerId, cardId, targets = [] } = action;
   const state = ctx.state;
   const player = state.players[playerId];

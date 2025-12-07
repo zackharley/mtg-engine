@@ -19,7 +19,7 @@ describe('move-card', () => {
       const cardId = makeCardId();
       const state = createStateWithCardInZone(cardId, playerId, fromZone);
 
-      const result = moveCard(state, cardId, fromZone, toZone);
+      const result = moveCard(state, { cardId, from: fromZone, to: toZone });
 
       expect(cardIsInZone(result, cardId, playerId, fromZone)).toBe(false);
       expect(cardIsInZone(result, cardId, playerId, toZone)).toBe(true);
@@ -30,7 +30,11 @@ describe('move-card', () => {
       const cardId = makeCardId();
       const state = createStateWithCardInZone(cardId, playerId, 'hand');
 
-      const result = moveCard(state, cardId, 'hand', 'battlefield');
+      const result = moveCard(state, {
+        cardId,
+        from: 'hand',
+        to: 'battlefield',
+      });
 
       expect(result).not.toBe(state);
       expect(result.players).not.toBe(state.players);
@@ -41,7 +45,11 @@ describe('move-card', () => {
       const ctx = createTestContext();
 
       expect(() => {
-        moveCard(ctx.state, cardId, 'hand', 'battlefield');
+        moveCard(ctx.state, {
+          cardId,
+          from: 'hand',
+          to: 'battlefield',
+        });
       }).toThrow(`Card ${cardId} not found`);
     });
   });

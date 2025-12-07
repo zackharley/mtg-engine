@@ -7,13 +7,18 @@ import type { CardId } from '../primitives/id';
 import { pushOrderedStack } from '../primitives/ordered-stack';
 import type { GameState, ZoneName } from '../state/state';
 
+interface MoveCardOptions {
+  cardId: CardId;
+  from: ZoneName;
+  to: ZoneName;
+  position?: 'top' | 'bottom' | number;
+}
+
 export function moveCard(
   state: GameState,
-  cardId: CardId,
-  from: ZoneName,
-  to: ZoneName,
-  position: 'top' | 'bottom' | number = 'top',
+  options: MoveCardOptions,
 ): GameState {
+  const { cardId, from, to, position = 'top' } = options;
   return produce(state, (draft) => {
     pipe(
       draft,
@@ -38,7 +43,7 @@ function addCardToZoneDraft(
   draft: Draft<GameState>,
   cardId: CardId,
   to: ZoneName,
-  position: 'top' | 'bottom' | number = 'top',
+  _position: 'top' | 'bottom' | number = 'top',
 ): Draft<GameState> {
   const card = draft.cards[cardId];
   if (!card) {
@@ -112,7 +117,7 @@ function removeCardFromZoneDraft(
       // TODO: Implement command logic
       break;
     default:
-      throw new Error(`Invalid zone ${from}`);
+      throw new Error(`Invalid zone ${String(from)}`);
   }
   return draft;
 }

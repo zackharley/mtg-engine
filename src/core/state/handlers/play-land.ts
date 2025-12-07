@@ -44,7 +44,11 @@ export default function handlePlayLand(
     );
   }
 
-  const nextState = moveCard(state, cardId, 'hand', 'battlefield');
+  const nextState = moveCard(state, {
+    cardId,
+    from: 'hand',
+    to: 'battlefield',
+  });
   ctx.state = produce(nextState, (draft) => {
     draft.cards[cardId].tapped = false;
 

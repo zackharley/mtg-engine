@@ -14,9 +14,9 @@ export const mountain = defineCard({
       text: 'Tap: Add {R}.',
       cost: [{ kind: 'TAP_SOURCE' }],
       effect: (ctx: ReduceContext) => {
-        ctx.state = produce(ctx.state, (draft) => {
+        ctx.state = produce(ctx.state, (_draft) => {
           // TODO: Determine who the player is who's tapping the land
-          // draft.players[].manaPool.R += 1;
+          // _draft.players[].manaPool.R += 1;
         });
       },
     },

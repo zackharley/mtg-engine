@@ -9,6 +9,8 @@ import {
   makePlayerId,
 } from '../primitives/id';
 import { createOrderedStack } from '../primitives/ordered-stack';
+import type { GameEvent } from '../state/reducer';
+import type { GameState } from '../state/state';
 import { Phase, Step } from '../turn/turn-structure';
 import { createGameController } from './game-controller';
 
@@ -510,7 +512,7 @@ describe('game-controller', () => {
         controller.provideDecision({ type: 'PASS' });
 
         expect(callback).toHaveBeenCalled();
-        const callArgs = callback.mock.calls[0];
+        const callArgs = callback.mock.calls[0] as [GameEvent[], GameState];
         expect(Array.isArray(callArgs[0])).toBe(true); // events
         expect(callArgs[1]).toBeDefined(); // state
       });
