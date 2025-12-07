@@ -2,15 +2,17 @@ import { produce } from 'immer';
 
 import type { CardDefinition } from './core/card/card';
 import type { ManaColor } from './core/costs/mana-costs';
-import { drawInitialHand,registerCardForPlayer } from './core/deck/deck';
-import type {
-  GameController} from './core/engine/game-controller';
 import {
-  createGameController
-} from './core/engine/game-controller';
-import type { PlayerId} from './core/primitives/id';
-import { makeCardId,makePlayerId } from './core/primitives/id';
+  drawInitialHand,
+  registerCardForPlayer,
+  shuffleLibrary,
+} from './core/deck/deck';
+import type { GameController } from './core/engine/game-controller';
+import { createGameController } from './core/engine/game-controller';
+import type { PlayerId } from './core/primitives/id';
+import { makeCardId, makePlayerId } from './core/primitives/id';
 import { createOrderedStack } from './core/primitives/ordered-stack';
+import { createSeededRng } from './core/random/random';
 import type { GameState } from './core/state/state';
 import { createInitialTurnState } from './core/turn/turn-state';
 import { Phase, Step } from './core/turn/turn-structure';
@@ -35,6 +37,7 @@ export interface PlayerSettings {
 export interface GameSettings {
   players: PlayerSettings[];
   startingLife?: number;
+  seed?: string;
 }
 
 // Re-export types for convenience
@@ -79,6 +82,7 @@ export function createGame(settings: GameSettings): {
     },
     gameEnded: false,
     playersWhoPassedPriority: new Set(),
+    rng: createSeededRng(settings.seed),
   };
 
   const { state: updatedState, playerIds } = initializePlayers(
@@ -89,9 +93,10 @@ export function createGame(settings: GameSettings): {
   );
   state = updatedState;
 
-  // TODO: Rule 103.3 - Shuffle decks (currently decks are in random order from registration)
+  // Rule 103.3 - Shuffle decks
   // Each player shuffles their deck so that the cards are in a random order.
   // Each player may then shuffle or cut their opponents' decks.
+  state = shuffleAllLibraries(state, playerIds);
 
   // Rule 103.5 - Draw initial hands
   // Each player draws a number of cards equal to their starting hand size, which is normally seven.
@@ -199,6 +204,23 @@ function makeEmptyManaPool(): ManaPool {
     R: 0,
     G: 0,
   };
+}
+
+/**
+ * Shuffles all players' libraries after deck registration.
+ * Based on rule 103.3: Each player shuffles their deck so that the cards are in a random order.
+ *
+ * @param state - The current game state
+ * @param playerIds - Array of player IDs whose libraries should be shuffled
+ * @returns Updated game state with shuffled libraries
+ */
+function shuffleAllLibraries(
+  state: GameState,
+  playerIds: PlayerId[],
+): GameState {
+  return playerIds.reduce<GameState>((currentState, playerId) => {
+    return shuffleLibrary(currentState, playerId);
+  }, state);
 }
 
 const DEFAULT_STARTING_HAND_SIZE = 7;

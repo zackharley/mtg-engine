@@ -156,26 +156,134 @@ describe('Rule 103: Starting the Game', () => {
 
   describe('103.3: Shuffling decks', () => {
     it('should shuffle each player deck so cards are in random order', () => {
-      const { controller, playerIds } = createGame({
-        players: [
-          { name: 'Alice', deck: [{ definition: testCard, count: 10 }] },
-          { name: 'Bob', deck: [{ definition: testCard, count: 10 }] },
-        ],
+      // Create multiple unique card definitions to properly test shuffling
+      const cardA = defineCard({
+        scryfallId: 'card-a',
+        name: 'Card A',
+        type: 'instant',
+        manaCost: parseManaCost('{1}'),
+        abilities: [],
+      });
+      const cardB = defineCard({
+        scryfallId: 'card-b',
+        name: 'Card B',
+        type: 'instant',
+        manaCost: parseManaCost('{2}'),
+        abilities: [],
+      });
+      const cardC = defineCard({
+        scryfallId: 'card-c',
+        name: 'Card C',
+        type: 'instant',
+        manaCost: parseManaCost('{3}'),
+        abilities: [],
+      });
+      const cardD = defineCard({
+        scryfallId: 'card-d',
+        name: 'Card D',
+        type: 'instant',
+        manaCost: parseManaCost('{4}'),
+        abilities: [],
+      });
+      const cardE = defineCard({
+        scryfallId: 'card-e',
+        name: 'Card E',
+        type: 'instant',
+        manaCost: parseManaCost('{5}'),
+        abilities: [],
       });
 
-      const state = controller.getState();
-      const [playerOne, playerTwo] = playerIds;
+      // Create a deck with a mix of unique cards and duplicates
+      // Deck: 3x Card A, 2x Card B, 1x Card C, 4x Card D, 2x Card E (total: 12 cards)
+      // After drawing 7 cards, 5 remain in library
+      const deck = [
+        { definition: cardA, count: 3 },
+        { definition: cardB, count: 2 },
+        { definition: cardC, count: 1 },
+        { definition: cardD, count: 4 },
+        { definition: cardE, count: 2 },
+      ];
+
+      // Test deterministic shuffling with same seed
+      const seed1 = 'shuffle-test-seed-1';
+      const { controller: controller1, playerIds: playerIds1 } = createGame({
+        seed: seed1,
+        players: [{ name: 'Alice', deck }],
+      });
+
+      const { controller: controller2, playerIds: playerIds2 } = createGame({
+        seed: seed1,
+        players: [{ name: 'Alice', deck }],
+      });
+
+      const state1 = controller1.getState();
+      const state2 = controller2.getState();
+      const [playerOne1] = playerIds1;
+      const [playerOne2] = playerIds2;
 
       // After shuffling (rule 103.3) and drawing initial hands (rule 103.5),
-      // players should have 7 cards in hand and 3 remaining in library
-      // Decks should be shuffled (order should be random, not deterministic)
-      expect(state.players[playerOne].hand).toHaveLength(7);
-      expect(state.players[playerOne].library).toHaveLength(3);
-      expect(state.players[playerTwo].hand).toHaveLength(7);
-      expect(state.players[playerTwo].library).toHaveLength(3);
-      throw new Error(
-        "This test isn't doing anything because we're not shuffling the decks and it's not failing",
-      );
+      // player should have 7 cards in hand and 5 remaining in library
+      expect(state1.players[playerOne1].hand).toHaveLength(7);
+      expect(state1.players[playerOne1].library).toHaveLength(5);
+
+      // Extract definition IDs from library to compare order
+      const getLibraryDefinitionIds = (
+        state: typeof state1,
+        playerId: typeof playerOne1,
+      ) => {
+        return Array.from(state.players[playerId].library).map(
+          (cardId) => state.cards[cardId].definitionId,
+        );
+      };
+
+      const library1DefIds = getLibraryDefinitionIds(state1, playerOne1);
+      const library2DefIds = getLibraryDefinitionIds(state2, playerOne2);
+
+      // With the same seed, the library order should be deterministic
+      // (card IDs differ, but definition IDs should be in the same order)
+      expect(library1DefIds).toEqual(library2DefIds);
+
+      // Test that shuffling actually occurred - order should not match registration order
+      // Cards are registered sequentially: A(3x), B(2x), C(1x), D(4x), E(2x)
+      // If cards were not shuffled, after drawing 7 from top, library would contain
+      // the bottom 5 cards in registration order: [D, D, D, E, E]
+      // With proper shuffling, the order should be randomized
+      const registrationOrderBottom5 = [
+        cardD.id,
+        cardD.id,
+        cardD.id,
+        cardE.id,
+        cardE.id,
+      ];
+      expect(library1DefIds).not.toEqual(registrationOrderBottom5);
+
+      // Test that different seeds produce different orders
+      const seed2 = 'shuffle-test-seed-2';
+      const { controller: controller3, playerIds: playerIds3 } = createGame({
+        seed: seed2,
+        players: [{ name: 'Alice', deck }],
+      });
+      const state3 = controller3.getState();
+      const [playerOne3] = playerIds3;
+      const library3DefIds = getLibraryDefinitionIds(state3, playerOne3);
+
+      // Different seeds should produce different orders (very unlikely to be the same)
+      expect(library3DefIds).not.toEqual(library1DefIds);
+
+      // Verify library contains exactly 5 cards (12 total - 7 drawn = 5 remaining)
+      expect(library1DefIds).toHaveLength(5);
+
+      // Verify all cards in library are from the expected card definitions
+      const validDefinitionIds = new Set([
+        cardA.id,
+        cardB.id,
+        cardC.id,
+        cardD.id,
+        cardE.id,
+      ]);
+      library1DefIds.forEach((defId) => {
+        expect(validDefinitionIds.has(defId)).toBe(true);
+      });
     });
 
     it('should set players decks as their libraries after shuffling', () => {

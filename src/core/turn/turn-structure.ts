@@ -60,10 +60,7 @@ export const PHASE_ORDER: Phase[] = [
  * Steps that do not grant priority to players.
  * Based on rule 500.3: untap step and certain cleanup steps.
  */
-export const STEPS_WITHOUT_PRIORITY = new Set<Step>([
-  Step.UNTAP,
-  Step.CLEANUP,
-]);
+export const STEPS_WITHOUT_PRIORITY = new Set<Step>([Step.UNTAP, Step.CLEANUP]);
 
 /**
  * Determines if a step grants priority to players.
@@ -111,4 +108,3 @@ export function getNextPhase(currentPhase: Phase): Phase {
   }
   return PHASE_ORDER[currentIndex + 1];
 }
-

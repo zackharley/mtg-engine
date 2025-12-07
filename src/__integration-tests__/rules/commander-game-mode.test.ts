@@ -1,4 +1,4 @@
-import { commanderGameMode,createGame } from '../../../src';
+import { commanderGameMode, createGame } from '../../../src';
 import { defineCard } from '../../../src/core/card/card';
 import { parseManaCost } from '../../../src/core/costs/mana-costs';
 
@@ -122,8 +122,8 @@ describe('Commander Game Mode', () => {
 
       // Commander should be in command zone, not library
       expect(state.players[playerOne].commandZone).toHaveLength(1);
-      // Library should only have the 5 test cards, not the commander
-      expect(state.players[playerOne].library).toHaveLength(5);
+      expect(state.players[playerOne].hand).toHaveLength(5);
+      expect(state.players[playerOne].library).toHaveLength(0);
 
       // Verify library doesn't contain commander
       const libraryCardIds = Array.from(state.players[playerOne].library);

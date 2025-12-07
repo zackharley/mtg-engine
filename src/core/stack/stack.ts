@@ -1,4 +1,9 @@
-import type { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
+import type {
+  CardId,
+  PlayerId,
+  StackObjectId,
+  TargetId,
+} from '../primitives/id';
 import type { OrderedStack } from '../primitives/ordered-stack';
 import type { ReduceContext } from '../state/reducer';
 

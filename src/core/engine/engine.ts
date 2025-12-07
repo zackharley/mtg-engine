@@ -1,16 +1,14 @@
-import { getAvailableDecisions } from '../decisions/available-decisions';
-import type { GameLog } from '../game-log/game-log';
+import { getAvailableDecisions } from '../actions/available-decisions';
 import type { PlayerId } from '../primitives/id';
 import { getNextPlayerWithPriority } from '../priority/priortity';
 import type { GameEvent } from '../state/reducer';
 import { reduce } from '../state/reducer';
-import type { GameState} from '../state/state';
+import type { GameState } from '../state/state';
 import { isGameOver, nextEngineAction } from '../state/state';
 import { stepGrantsPriority } from '../turn/turn-structure';
 
 export interface RunGameResult {
   finalState: GameState;
-  gameLog: GameLog;
   events: GameEvent[];
   needsPlayerDecision: boolean;
   playerIdNeedingDecision?: PlayerId;
@@ -32,7 +30,6 @@ export function runGame(
   //    in handleAdvanceToNextStep when steps advance
   // 3. Calling it here would cause turn-based actions (like drawing) to happen twice
   let state = initialState;
-  const gameLog: GameLog = [];
   const allEvents: GameEvent[] = [];
 
   while (!isGameOver(state)) {
@@ -80,7 +77,6 @@ export function runGame(
 
       return {
         finalState: state,
-        gameLog,
         events: allEvents,
         needsPlayerDecision: true,
         playerIdNeedingDecision: playerWithPriority,
@@ -101,7 +97,6 @@ export function runGame(
 
   return {
     finalState: state,
-    gameLog,
     events: allEvents,
     needsPlayerDecision: false,
   };

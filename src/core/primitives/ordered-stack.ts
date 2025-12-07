@@ -28,6 +28,10 @@ export function createOrderedStack<T>(): OrderedStack<T> {
   return Object.freeze([]);
 }
 
+function isReadonlyArray<T>(value: T | readonly T[]): value is readonly T[] {
+  return Array.isArray(value);
+}
+
 /**
  * Pushes an element onto the top of the stack, returning a new stack instance.
  * Does not mutate the original stack.
@@ -39,10 +43,7 @@ export function createOrderedStack<T>(): OrderedStack<T> {
 export function pushOrderedStack<T>(
   stack: OrderedStack<T>,
   element: T,
-): OrderedStack<T> {
-  return Object.freeze([...stack, element]);
-}
-
+): OrderedStack<T>;
 /**
  * Pushes multiple elements onto the top of the stack in order.
  * The first element in the array will be at the bottom, the last at the top.
@@ -51,11 +52,18 @@ export function pushOrderedStack<T>(
  * @param elements - The elements to push onto the stack
  * @returns A new stack with the elements added to the top
  */
-export function pushManyOrderedStack<T>(
+export function pushOrderedStack<T>(
   stack: OrderedStack<T>,
   elements: readonly T[],
+): OrderedStack<T>;
+export function pushOrderedStack<T>(
+  stack: OrderedStack<T>,
+  elementOrElements: T | readonly T[],
 ): OrderedStack<T> {
-  return Object.freeze([...stack, ...elements]);
+  if (isReadonlyArray(elementOrElements)) {
+    return Object.freeze([...stack, ...elementOrElements]);
+  }
+  return Object.freeze([...stack, elementOrElements]);
 }
 
 /**

@@ -1,9 +1,9 @@
-import { getAvailableDecisions } from '../decisions/available-decisions';
+import { getAvailableDecisions } from '../actions/available-decisions';
 import type { CardId, PlayerId, TargetId } from '../primitives/id';
 import { markPlayerPassedPriority } from '../priority/priortity';
-import type { AvailablePlayerDecision,GameEvent } from '../state/reducer';
+import type { AvailablePlayerDecision, GameEvent } from '../state/reducer';
 import { reduce } from '../state/reducer';
-import type { GameState} from '../state/state';
+import type { GameState } from '../state/state';
 import { processTurnBasedActions } from '../state/state';
 import { runGame } from './engine';
 

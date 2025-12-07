@@ -1,13 +1,16 @@
-import { castDraft,produce } from 'immer';
+import { castDraft, produce } from 'immer';
 
 import type { CardDefinition } from '../card/card';
-import type { PlayerId} from '../primitives/id';
+import type { PlayerId } from '../primitives/id';
 import { makeCardId } from '../primitives/id';
 import {
+  fromArrayOrderedStack,
   isEmptyOrderedStack,
   popOrderedStack,
   pushOrderedStack,
+  toArrayOrderedStack,
 } from '../primitives/ordered-stack';
+import { shuffle } from '../random/random';
 import type { GameState } from '../state/state';
 
 /**
@@ -77,6 +80,32 @@ export function drawCard(state: GameState, playerId: PlayerId): GameState {
       playerDraft.library = castDraft(newLibrary);
       playerDraft.hand.push(drawnCardId);
     }
+  });
+}
+
+/**
+ * Shuffles a player's library.
+ * Based on rule 103.3 and 701.24a: Each player shuffles their deck so that the cards are in a random order.
+ *
+ * @param state - The current game state
+ * @param playerId - The player whose library should be shuffled
+ * @returns Updated game state with shuffled library
+ */
+export function shuffleLibrary(
+  state: GameState,
+  playerId: PlayerId,
+): GameState {
+  const player = state.players[playerId];
+  if (!player) {
+    throw new Error(`Player ${playerId} not found in game state`);
+  }
+
+  return produce(state, (draft) => {
+    const playerDraft = draft.players[playerId];
+    // Convert OrderedStack to array, shuffle, then convert back
+    const libraryArray = toArrayOrderedStack(playerDraft.library);
+    const shuffledArray = shuffle(state.rng, libraryArray);
+    playerDraft.library = castDraft(fromArrayOrderedStack(shuffledArray));
   });
 }
 

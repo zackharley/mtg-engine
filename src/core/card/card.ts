@@ -3,10 +3,9 @@ import type {
   CardDefinitionId,
   CardId,
   PlayerId,
-  TargetId} from '../primitives/id';
-import {
-  makeCardDefinitionId
+  TargetId,
 } from '../primitives/id';
+import { makeCardDefinitionId } from '../primitives/id';
 import type { GameEvent, ReduceContext } from '../state/reducer';
 
 type CardType =

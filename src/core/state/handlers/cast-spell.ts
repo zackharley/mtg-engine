@@ -1,4 +1,4 @@
-import { castDraft,produce } from 'immer';
+import { castDraft, produce } from 'immer';
 
 import type { SpellAbility } from '../../card/card';
 import { payManaCost } from '../../costs/pay-mana';

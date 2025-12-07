@@ -83,7 +83,9 @@ describe('random module', () => {
 
     it('throws error when min > max', () => {
       const rng = createSeededRng('test');
-      expect(() => randomInt(rng, 10, 5)).toThrow('min (10) must be less than or equal to max (5)');
+      expect(() => randomInt(rng, 10, 5)).toThrow(
+        'min (10) must be less than or equal to max (5)',
+      );
     });
   });
 
@@ -110,8 +112,12 @@ describe('random module', () => {
 
     it('throws error when min >= max', () => {
       const rng = createSeededRng('test');
-      expect(() => randomFloat(rng, 10, 10)).toThrow('min (10) must be less than max (10)');
-      expect(() => randomFloat(rng, 10, 5)).toThrow('min (10) must be less than max (5)');
+      expect(() => randomFloat(rng, 10, 10)).toThrow(
+        'min (10) must be less than max (10)',
+      );
+      expect(() => randomFloat(rng, 10, 5)).toThrow(
+        'min (10) must be less than max (5)',
+      );
     });
   });
 
@@ -196,7 +202,9 @@ describe('random module', () => {
     it('throws error for negative count', () => {
       const rng = createSeededRng('test');
       const array = [1, 2, 3];
-      expect(() => randomSample(rng, array, -1)).toThrow('count (-1) must be non-negative');
+      expect(() => randomSample(rng, array, -1)).toThrow(
+        'count (-1) must be non-negative',
+      );
     });
 
     it('returns frozen array', () => {
@@ -341,7 +349,13 @@ describe('random module', () => {
       // Same seed produces same shuffle
       expect(shuffled1).toEqual(shuffled2);
       // Original is unchanged
-      expect(library).toEqual(['card-1', 'card-2', 'card-3', 'card-4', 'card-5']);
+      expect(library).toEqual([
+        'card-1',
+        'card-2',
+        'card-3',
+        'card-4',
+        'card-5',
+      ]);
     });
 
     it('shuffles multiple decks independently', () => {
@@ -358,4 +372,3 @@ describe('random module', () => {
     });
   });
 });
-

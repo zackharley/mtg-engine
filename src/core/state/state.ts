@@ -4,6 +4,7 @@ import type { CardDefinitionId, CardId, PlayerId } from '../primitives/id';
 import type { OrderedStack } from '../primitives/ordered-stack';
 import { isEmptyOrderedStack } from '../primitives/ordered-stack';
 import { allPlayersHavePassedPriority } from '../priority/priortity';
+import type { SeededRng } from '../random/random';
 import type { Stack } from '../stack/stack';
 import { createAdvancementAction } from '../turn/phase-advancement';
 import { performTurnBasedActions } from '../turn/turn-based-actions';
@@ -18,6 +19,7 @@ export interface GameState {
   turn: TurnState;
   gameEnded: boolean;
   playersWhoPassedPriority: Set<PlayerId>;
+  rng: SeededRng;
 }
 
 interface PlayerState {
@@ -47,7 +49,7 @@ export function isGameOver(state: GameState): boolean {
 
   const players = Object.values(state.players);
   const alivePlayers = players.filter((player) => player.life > 0);
-  if (alivePlayers.length === 1) {
+  if (alivePlayers.length <= 1) {
     return true;
   }
 

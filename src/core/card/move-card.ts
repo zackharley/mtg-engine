@@ -1,9 +1,10 @@
-import type { Draft} from 'immer';
-import { castDraft,produce } from 'immer';
+import type { Draft } from 'immer';
+import { castDraft, produce } from 'immer';
+
+import { pipe } from '@/lib/pipe';
 
 import type { CardId } from '../primitives/id';
 import { pushOrderedStack } from '../primitives/ordered-stack';
-import { pipe } from '../state/pipe';
 import type { GameState, ZoneName } from '../state/state';
 
 export function moveCard(

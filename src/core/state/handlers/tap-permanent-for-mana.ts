@@ -33,9 +33,9 @@ export default function handleTapPermanentForMana(
   const withMana = addMana(tappedState, playerId, 'R', 1);
 
   ctx.state = withMana;
-  
+
   // Reset priority passes when a player takes an action (rule 117.3c)
   ctx.state = resetPriorityPasses(ctx.state);
-  
+
   ctx.emit({ type: 'MANA_ADDED', playerId, color: 'R', amount: 1 });
 }

@@ -1,10 +1,10 @@
+import { createTestContext } from '@/__tests__/test-utils';
+
 import type { CardDefinition } from '../card/card';
 import { defineCard } from '../card/card';
 import { parseManaCost } from '../costs/mana-costs';
 import { makePlayerId } from '../primitives/id';
 import { createOrderedStack } from '../primitives/ordered-stack';
-import type { GameState } from '../state/state';
-import { createInitialTurnState } from '../turn/turn-state';
 import { drawCard, registerCardForPlayer } from './deck';
 
 describe('deck utilities', () => {
@@ -19,29 +19,10 @@ describe('deck utilities', () => {
   describe('registerCardsForPlayer', () => {
     it('creates card instances and adds them to player library', () => {
       const playerId = makePlayerId();
-      const initialState: GameState = {
-        players: {
-          [playerId]: {
-            name: 'Test Player',
-            life: 20,
-            manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
-            hand: [],
-            battlefield: [],
-            graveyard: createOrderedStack(),
-            library: createOrderedStack(),
-            commandZone: [],
-          },
-        },
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      const ctx = createTestContext({ playerId });
 
       const result = registerCardForPlayer(
-        initialState,
+        ctx.state,
         playerId,
         testCardDefinition,
         2,
@@ -64,39 +45,36 @@ describe('deck utilities', () => {
       const playerOneId = makePlayerId();
       const playerTwoId = makePlayerId();
 
-      const initialState: GameState = {
-        players: {
-          [playerOneId]: {
-            name: 'Player One',
-            life: 20,
-            manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
-            hand: [],
-            battlefield: [],
-            graveyard: createOrderedStack(),
-            library: createOrderedStack(),
-            commandZone: [],
-          },
-          [playerTwoId]: {
-            name: 'Player Two',
-            life: 20,
-            manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
-            hand: [],
-            battlefield: [],
-            graveyard: createOrderedStack(),
-            library: createOrderedStack(),
-            commandZone: [],
+      const ctx = createTestContext({
+        playerId: playerOneId,
+        overrides: {
+          players: {
+            [playerOneId]: {
+              name: 'Player One',
+              life: 20,
+              manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
+              hand: [],
+              battlefield: [],
+              graveyard: createOrderedStack(),
+              library: createOrderedStack(),
+              commandZone: [],
+            },
+            [playerTwoId]: {
+              name: 'Player Two',
+              life: 20,
+              manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
+              hand: [],
+              battlefield: [],
+              graveyard: createOrderedStack(),
+              library: createOrderedStack(),
+              commandZone: [],
+            },
           },
         },
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerOneId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      });
 
       const afterPlayerOne = registerCardForPlayer(
-        initialState,
+        ctx.state,
         playerOneId,
         testCardDefinition,
         1,
@@ -133,18 +111,10 @@ describe('deck utilities', () => {
 
     it('throws error if player does not exist', () => {
       const playerId = makePlayerId();
-      const initialState: GameState = {
-        players: {},
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      const ctx = createTestContext({ overrides: { players: {} } });
 
       expect(() => {
-        registerCardForPlayer(initialState, playerId, testCardDefinition, 1);
+        registerCardForPlayer(ctx.state, playerId, testCardDefinition, 1);
       }).toThrow(`Player ${playerId} not found in game state`);
     });
   });
@@ -152,29 +122,10 @@ describe('deck utilities', () => {
   describe('drawCard', () => {
     it('moves a card from library to hand', () => {
       const playerId = makePlayerId();
-      const initialState: GameState = {
-        players: {
-          [playerId]: {
-            name: 'Test Player',
-            life: 20,
-            manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
-            hand: [],
-            battlefield: [],
-            graveyard: createOrderedStack(),
-            library: createOrderedStack(),
-            commandZone: [],
-          },
-        },
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      const ctx = createTestContext({ playerId });
 
       const withCards = registerCardForPlayer(
-        initialState,
+        ctx.state,
         playerId,
         testCardDefinition,
         2,
@@ -192,46 +143,27 @@ describe('deck utilities', () => {
 
     it('throws error if library is empty', () => {
       const playerId = makePlayerId();
-      const initialState: GameState = {
-        players: {
-          [playerId]: {
-            name: 'Test Player',
-            life: 20,
-            manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
-            hand: [],
-            battlefield: [],
-            graveyard: createOrderedStack(),
-            library: createOrderedStack(),
-            commandZone: [],
+      const ctx = createTestContext({
+        overrides: {
+          players: {
+            [playerId]: {
+              library: createOrderedStack(),
+            },
           },
         },
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      });
 
       expect(() => {
-        drawCard(initialState, playerId);
+        drawCard(ctx.state, playerId);
       }).toThrow(`Player ${playerId} has no cards in library to draw`);
     });
 
     it('throws error if player does not exist', () => {
       const playerId = makePlayerId();
-      const initialState: GameState = {
-        players: {},
-        cards: {},
-        cardDefinitions: {},
-        stack: createOrderedStack(),
-        turn: createInitialTurnState(playerId),
-        gameEnded: false,
-        playersWhoPassedPriority: new Set(),
-      };
+      const ctx = createTestContext({ overrides: { players: {} } });
 
       expect(() => {
-        drawCard(initialState, playerId);
+        drawCard(ctx.state, playerId);
       }).toThrow(`Player ${playerId} not found in game state`);
     });
   });

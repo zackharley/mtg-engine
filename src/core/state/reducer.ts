@@ -1,7 +1,12 @@
 import { cloneDeep } from 'lodash';
 
 import type { ManaColor } from '../costs/mana-costs';
-import type { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
+import type {
+  CardId,
+  PlayerId,
+  StackObjectId,
+  TargetId,
+} from '../primitives/id';
 import handleAdvanceToNextStep from './handlers/advance-to-next-step';
 import { handleCastSpell } from './handlers/cast-spell';
 import handleDrawCard from './handlers/draw-card';
@@ -19,11 +24,9 @@ export interface ReduceContext {
 type ZoneName = 'hand' | 'battlefield' | 'graveyard' | 'library' | 'stack';
 
 export type AvailablePlayerDecision =
-  | { type: 'DRAW_CARD' }
   | { type: 'CAST_SPELL'; cardId: CardId; targets?: TargetId[] }
   | { type: 'PLAY_LAND'; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
-  | { type: 'PASS' }
   | { type: 'PASS_PRIORITY' }
   | { type: 'END_GAME' };
 

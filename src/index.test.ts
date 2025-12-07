@@ -31,8 +31,10 @@ describe('game harness', () => {
     expect(state.players[playerOne].manaPool.R).toBe(0);
     expect(state.players[playerTwo].manaPool.R).toBe(0);
 
-    expect(state.players[playerOne].library).toHaveLength(2);
-    expect(state.players[playerTwo].library).toHaveLength(1);
+    expect(state.players[playerOne].hand).toHaveLength(2);
+    expect(state.players[playerOne].library).toHaveLength(0);
+    expect(state.players[playerTwo].hand).toHaveLength(1);
+    expect(state.players[playerTwo].library).toHaveLength(0);
 
     expect(state.cardDefinitions[testCard.id]).toBeDefined();
 

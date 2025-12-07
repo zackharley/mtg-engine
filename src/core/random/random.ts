@@ -70,11 +70,7 @@ export function randomInt(rng: SeededRng, min: number, max: number): number {
  * @param max - Maximum value (exclusive)
  * @returns A random float between min and max
  */
-export function randomFloat(
-  rng: SeededRng,
-  min: number,
-  max: number,
-): number {
+export function randomFloat(rng: SeededRng, min: number, max: number): number {
   if (min >= max) {
     throw new Error(`min (${min}) must be less than max (${max})`);
   }
@@ -166,10 +162,7 @@ export function randomSample<T>(
  * const shuffled = shuffle(rng, library);
  * ```
  */
-export function shuffle<T>(
-  rng: SeededRng,
-  array: readonly T[],
-): readonly T[] {
+export function shuffle<T>(rng: SeededRng, array: readonly T[]): readonly T[] {
   // Create a mutable copy for Fisher-Yates
   const shuffled = [...array];
 
@@ -200,4 +193,3 @@ export function shuffleInPlace<T>(rng: SeededRng, array: T[]): T[] {
   }
   return array;
 }
-
