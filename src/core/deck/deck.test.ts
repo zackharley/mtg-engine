@@ -1,11 +1,11 @@
-import { CardDefinition } from '../card/card';
+import type { CardDefinition } from '../card/card';
 import { defineCard } from '../card/card';
 import { parseManaCost } from '../costs/mana-costs';
-import { registerCardForPlayer, drawCard } from './deck';
-import { GameState } from '../state/state';
 import { makePlayerId } from '../primitives/id';
 import { createOrderedStack } from '../primitives/ordered-stack';
+import type { GameState } from '../state/state';
 import { createInitialTurnState } from '../turn/turn-state';
+import { drawCard, registerCardForPlayer } from './deck';
 
 describe('deck utilities', () => {
   const testCardDefinition: CardDefinition = defineCard({

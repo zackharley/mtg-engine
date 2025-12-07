@@ -4,6 +4,7 @@ import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import jestPlugin from 'eslint-plugin-jest';
 import prettierConfig from 'eslint-config-prettier';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
@@ -26,11 +27,13 @@ export default defineConfig(
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       jest: jestPlugin,
+      'simple-import-sort': simpleImportSort,
     },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        projectService: true,
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         ...jestPlugin.environments.globals.globals,
@@ -66,6 +69,17 @@ export default defineConfig(
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
+        },
+      ],
+
+      // Import organization
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
 
       // Code quality & composability
       complexity: ['warn', 10],

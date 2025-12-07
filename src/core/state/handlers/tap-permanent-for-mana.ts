@@ -1,7 +1,8 @@
 import { produce } from 'immer';
-import { GameAction, ReduceContext } from '../reducer';
+
 import { addMana } from '../../costs/mana-pool';
 import { resetPriorityPasses } from '../../priority/priortity';
+import type { GameAction, ReduceContext } from '../reducer';
 
 export default function handleTapPermanentForMana(
   ctx: ReduceContext,

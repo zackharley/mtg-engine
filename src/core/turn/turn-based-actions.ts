@@ -1,10 +1,11 @@
 import { produce } from 'immer';
-import { GameState } from '../state/state';
-import { Step } from './turn-structure';
+
+import type { ManaColor } from '../costs/mana-costs';
 import { drawCard } from '../deck/deck';
-import { ManaColor } from '../costs/mana-costs';
-import { PlayerId } from '../primitives/id';
+import type { PlayerId } from '../primitives/id';
 import { isEmptyOrderedStack } from '../primitives/ordered-stack';
+import type { GameState } from '../state/state';
+import { Step } from './turn-structure';
 
 /**
  * Performs turn-based actions for a given step.
@@ -65,6 +66,9 @@ function performUntapStep(state: GameState): GameState {
  * Performs draw step turn-based actions.
  * Based on rule 504: Draw Step.
  * - Active player draws a card (rule 504.1)
+ *
+ * Rule 103.8a: In a two-player game, the player who plays first skips
+ * the draw step of their first turn.
  */
 function performDrawStep(
   state: GameState,
@@ -72,6 +76,17 @@ function performDrawStep(
 ): GameState {
   const player = state.players[activePlayerId];
   if (!player) {
+    return state;
+  }
+
+  // Rule 103.8a: Skip draw step for starting player in two-player game
+  const playerCount = Object.keys(state.players).length;
+  const isTwoPlayerGame = playerCount === 2;
+  const isFirstTurn = state.turn.turnNumber === 1;
+  const isStartingPlayer = activePlayerId === state.turn.startingPlayerId;
+
+  if (isTwoPlayerGame && isFirstTurn && isStartingPlayer) {
+    // Starting player skips draw step on their first turn (turn 1)
     return state;
   }
 

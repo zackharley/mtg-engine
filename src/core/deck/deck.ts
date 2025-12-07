@@ -1,12 +1,14 @@
-import { produce, castDraft } from 'immer';
-import { CardDefinition } from '../card/card';
-import { PlayerId, makeCardId } from '../primitives/id';
-import { GameState } from '../state/state';
+import { castDraft,produce } from 'immer';
+
+import type { CardDefinition } from '../card/card';
+import type { PlayerId} from '../primitives/id';
+import { makeCardId } from '../primitives/id';
 import {
-  popOrderedStack,
   isEmptyOrderedStack,
+  popOrderedStack,
   pushOrderedStack,
 } from '../primitives/ordered-stack';
+import type { GameState } from '../state/state';
 
 /**
  * Registers card instances for a player's deck.
@@ -74,6 +76,46 @@ export function drawCard(state: GameState, playerId: PlayerId): GameState {
     if (drawnCardId) {
       playerDraft.library = castDraft(newLibrary);
       playerDraft.hand.push(drawnCardId);
+    }
+  });
+}
+
+/**
+ * Draws a player's initial hand during game setup.
+ * Based on rule 103.5: Each player draws a number of cards equal to their starting hand size,
+ * which is normally seven.
+ *
+ * If the player's library doesn't have enough cards, draws as many as available.
+ * This handles edge cases like test scenarios with very small decks.
+ *
+ * @param state - The current game state
+ * @param playerId - The player drawing their initial hand
+ * @param startingHandSize - Number of cards to draw (default: 7)
+ * @returns Updated game state with cards drawn into player's hand
+ */
+export function drawInitialHand(
+  state: GameState,
+  playerId: PlayerId,
+  startingHandSize = 7,
+): GameState {
+  const player = state.players[playerId];
+  if (!player) {
+    throw new Error(`Player ${playerId} not found in game state`);
+  }
+
+  return produce(state, (draft) => {
+    const playerDraft = draft.players[playerId];
+    // Draw up to startingHandSize cards, stopping if library is empty
+    for (let i = 0; i < startingHandSize; i++) {
+      if (isEmptyOrderedStack(playerDraft.library)) {
+        // Library is empty, stop drawing
+        break;
+      }
+      const [newLibrary, drawnCardId] = popOrderedStack(playerDraft.library);
+      if (drawnCardId) {
+        playerDraft.library = castDraft(newLibrary);
+        playerDraft.hand.push(drawnCardId);
+      }
     }
   });
 }

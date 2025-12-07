@@ -1,5 +1,5 @@
-import { CardDefinition } from '../card/card';
-import { GameSettings, PlayerSettings } from '../../index';
+import type { GameSettings, PlayerSettings } from '../../index';
+import type { CardDefinition } from '../card/card';
 
 /**
  * A game mode is a package of game settings that configures how a game is initialized.

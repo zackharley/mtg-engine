@@ -1,10 +1,11 @@
-import { produce, castDraft } from 'immer';
+import { castDraft,produce } from 'immer';
+
+import { moveCard } from '../../card/move-card';
 import {
   peekOrderedStack,
   popOrderedStack,
 } from '../../primitives/ordered-stack';
-import { GameAction, ReduceContext } from '../reducer';
-import { moveCard } from '../../card/move-card';
+import type { GameAction, ReduceContext } from '../reducer';
 
 export default function handleResolveTopOfStack(
   ctx: ReduceContext,

@@ -1,8 +1,8 @@
-import { GameAction, ReduceContext } from '../reducer';
+import type { PlayerId } from '../../primitives/id';
+import { resetPriorityPasses } from '../../priority/priortity';
 import { advanceTurnState } from '../../turn/phase-advancement';
 import { performTurnBasedActions } from '../../turn/turn-based-actions';
-import { PlayerId } from '../../primitives/id';
-import { resetPriorityPasses } from '../../priority/priortity';
+import type { GameAction, ReduceContext } from '../reducer';
 
 export default function handleAdvanceToNextStep(
   ctx: ReduceContext,

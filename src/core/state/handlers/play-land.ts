@@ -1,7 +1,8 @@
 import { produce } from 'immer';
+
 import { moveCard } from '../../card/move-card';
-import { GameAction, ReduceContext } from '../reducer';
 import { resetPriorityPasses } from '../../priority/priortity';
+import type { GameAction, ReduceContext } from '../reducer';
 
 /**
  * Gets the maximum number of lands a player can play per turn.

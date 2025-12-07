@@ -1,5 +1,5 @@
-import { GameState } from '../state/state';
-import { PlayerId } from '../primitives/id';
+import type { PlayerId } from '../primitives/id';
+import type { GameState } from '../state/state';
 
 /**
  * Checks if all players have passed priority.

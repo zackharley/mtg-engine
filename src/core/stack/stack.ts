@@ -1,6 +1,6 @@
-import { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
-import { ReduceContext } from '../state/reducer';
-import { OrderedStack } from '../primitives/ordered-stack';
+import type { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
+import type { OrderedStack } from '../primitives/ordered-stack';
+import type { ReduceContext } from '../state/reducer';
 
 type StackObjectType = 'SPELL' | 'ABILITY' | 'ENGINE';
 

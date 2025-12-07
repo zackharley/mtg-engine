@@ -1,6 +1,6 @@
-import { GameAction, ReduceContext } from '../reducer';
 import { drawCard } from '../../deck/deck';
 import { resetPriorityPasses } from '../../priority/priortity';
+import type { GameAction, ReduceContext } from '../reducer';
 
 export default function handleDrawCard(
   ctx: ReduceContext,

@@ -1,15 +1,12 @@
-import { GameLog } from '../game-log/game-log';
-import { reduce, GameEvent } from '../state/reducer';
-import {
-  GameState,
-  isGameOver,
-  nextEngineAction,
-  processTurnBasedActions,
-} from '../state/state';
-import { PlayerId } from '../primitives/id';
 import { getAvailableDecisions } from '../decisions/available-decisions';
-import { stepGrantsPriority } from '../turn/turn-structure';
+import type { GameLog } from '../game-log/game-log';
+import type { PlayerId } from '../primitives/id';
 import { getNextPlayerWithPriority } from '../priority/priortity';
+import type { GameEvent } from '../state/reducer';
+import { reduce } from '../state/reducer';
+import type { GameState} from '../state/state';
+import { isGameOver, nextEngineAction } from '../state/state';
+import { stepGrantsPriority } from '../turn/turn-structure';
 
 export interface RunGameResult {
   finalState: GameState;
@@ -29,7 +26,12 @@ export function runGame(
   initialState: GameState,
   onEvents?: EngineEventSink,
 ): RunGameResult {
-  let state = processTurnBasedActions(initialState);
+  // Note: We don't call processTurnBasedActions here because:
+  // 1. When starting a new game, the initial state is already processed
+  // 2. When continuing from a decision, turn-based actions are already processed
+  //    in handleAdvanceToNextStep when steps advance
+  // 3. Calling it here would cause turn-based actions (like drawing) to happen twice
+  let state = initialState;
   const gameLog: GameLog = [];
   const allEvents: GameEvent[] = [];
 

@@ -1,7 +1,8 @@
 import { produce } from 'immer';
-import { ManaColor } from './mana-costs';
-import { GameState } from '../state/state';
-import { PlayerId } from '../primitives/id';
+
+import type { PlayerId } from '../primitives/id';
+import type { GameState } from '../state/state';
+import type { ManaColor } from './mana-costs';
 
 export function addMana(
   state: GameState,

@@ -1,4 +1,4 @@
-import { createGame, commanderGameMode } from '../../../src';
+import { commanderGameMode,createGame } from '../../../src';
 import { defineCard } from '../../../src/core/card/card';
 import { parseManaCost } from '../../../src/core/costs/mana-costs';
 

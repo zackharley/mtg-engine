@@ -1,9 +1,11 @@
-import { GameState } from '../state/state';
-import { reduce, GameEvent, AvailablePlayerDecision } from '../state/reducer';
-import { PlayerId, CardId, TargetId } from '../primitives/id';
-import { runGame } from './engine';
 import { getAvailableDecisions } from '../decisions/available-decisions';
+import type { CardId, PlayerId, TargetId } from '../primitives/id';
 import { markPlayerPassedPriority } from '../priority/priortity';
+import type { AvailablePlayerDecision,GameEvent } from '../state/reducer';
+import { reduce } from '../state/reducer';
+import type { GameState} from '../state/state';
+import { processTurnBasedActions } from '../state/state';
+import { runGame } from './engine';
 
 export type PlayerDecision =
   | { type: 'DRAW_CARD' }
@@ -113,7 +115,7 @@ export function createGameController(initialState: GameState): GameController {
         .slice()
         .reverse()
         .find((e) => e.type === 'PLAYER_DECISION_REQUESTED');
-      if (decisionEvent && decisionEvent.type === 'PLAYER_DECISION_REQUESTED') {
+      if (decisionEvent?.type === 'PLAYER_DECISION_REQUESTED') {
         pendingDecision = {
           playerId: decisionEvent.playerId,
           availableDecisions: decisionEvent.availableDecisions,
@@ -133,6 +135,10 @@ export function createGameController(initialState: GameState): GameController {
       pendingDecision = null;
     }
   }
+
+  // Process turn-based actions for the initial step before starting the game loop
+  // This ensures the initial step (e.g., UNTAP) is processed once when the game starts
+  state = processTurnBasedActions(state);
 
   // Start the initial game loop
   continueGameLoop(state);

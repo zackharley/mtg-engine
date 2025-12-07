@@ -1,6 +1,7 @@
 import { produce } from 'immer';
+
 import { defineCard } from '../../core/card/card';
-import { ReduceContext } from '../../core/state/reducer';
+import type { ReduceContext } from '../../core/state/reducer';
 
 export const mountain = defineCard({
   scryfallId: 'basic-land-mountain',

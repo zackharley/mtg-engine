@@ -1,10 +1,10 @@
-import { PlayerId } from '../primitives/id';
+import type { PlayerId } from '../primitives/id';
 import {
-  Phase,
-  Step,
-  PHASE_STEPS,
-  getNextStep,
   getNextPhase,
+  getNextStep,
+  Phase,
+  PHASE_STEPS,
+  Step,
 } from './turn-structure';
 
 /**
@@ -14,11 +14,13 @@ import {
 export interface TurnState {
   /** The player whose turn it currently is */
   activePlayerId: PlayerId;
+  /** The starting player of the game (used to determine when to increment turn number) */
+  startingPlayerId: PlayerId;
   /** The current phase of the turn */
   phase: Phase;
   /** The current step within the phase, or null if the phase has no steps */
   step: Step | null;
-  /** The turn number (starts at 1 for the starting player's first turn) */
+  /** The turn number (starts at 1, increments only when wrapping back to starting player) */
   turnNumber: number;
   /** Number of lands played this turn by the active player. Default limit is 1 per turn. */
   landPlayedThisTurn: number;
@@ -30,6 +32,7 @@ export interface TurnState {
 export function createInitialTurnState(startingPlayerId: PlayerId): TurnState {
   return {
     activePlayerId: startingPlayerId,
+    startingPlayerId,
     phase: Phase.BEGINNING,
     step: Step.UNTAP,
     turnNumber: 1,

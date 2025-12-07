@@ -1,12 +1,13 @@
-import {
+import type { ManaCost } from '../costs/mana-costs';
+import type {
   CardDefinitionId,
   CardId,
-  makeCardDefinitionId,
   PlayerId,
-  TargetId,
+  TargetId} from '../primitives/id';
+import {
+  makeCardDefinitionId
 } from '../primitives/id';
-import { ManaCost } from '../costs/mana-costs';
-import { GameEvent, ReduceContext } from '../state/reducer';
+import type { GameEvent, ReduceContext } from '../state/reducer';
 
 type CardType =
   | 'artifact'

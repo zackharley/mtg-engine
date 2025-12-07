@@ -1,6 +1,6 @@
-import { defineCard } from './card';
 import { parseManaCost } from '../costs/mana-costs';
 import type { ReduceContext } from '../state/reducer';
+import { defineCard } from './card';
 
 describe('defineCard ability modeling', () => {
   it('assigns ids to cards and their abilities', () => {

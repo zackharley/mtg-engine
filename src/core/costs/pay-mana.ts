@@ -1,7 +1,8 @@
 import { produce } from 'immer';
-import { GameState } from '../state/state';
-import { PlayerId } from '../primitives/id';
-import { ManaColor, ManaCost } from './mana-costs';
+
+import type { PlayerId } from '../primitives/id';
+import type { GameState } from '../state/state';
+import type { ManaColor, ManaCost } from './mana-costs';
 
 type ManaPool = Record<ManaColor, number>;
 

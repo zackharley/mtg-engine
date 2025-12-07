@@ -52,6 +52,8 @@
 - Keep files under 300 lines; split large card libraries by set/mechanic.
 - Document public APIs with TSDoc; include rationale for intentionally complex flows (e.g., layering and dependency order).
 - Maintain a shared vocabulary for card components (`Permanent`, `Spell`, `Ability`, `Effect`) to avoid synonyms that confuse readers.
+- **Never use barrel files** (index.ts files that only re-export) – they can cause performance issues with tree-shaking and module resolution. Import directly from source files instead.
+- **Use `@` path alias for imports** – Prefer `@/core/random/random` over relative paths like `../../core/random/random` for cleaner, more maintainable imports. The `@` alias maps to the `src` directory root.
 
 ## Testing Playbook
 
@@ -60,6 +62,26 @@
 3. **Property tests** – where applicable, use generated card data to assert invariants (life total never drops below -infinite, tokens respect state-based actions).
 4. **Snapshot states** – capture serialized game states to detect accidental API surface changes.
 5. **Test doubles** – mock only at module boundaries (e.g., adapters); keep rule evaluators real to ensure fidelity.
+
+### Testing Anti-Patterns to Avoid
+
+1. **Conditionals in tests** – Never use `if` statements to check preconditions. Use assertions instead. Conditionals hide bugs by silently skipping test steps when expectations aren't met.
+   - ❌ Bad: `if (controller.isWaitingForDecision()) { controller.provideDecision(...); }`
+   - ✅ Good: `expect(controller.isWaitingForDecision()).toBe(true); controller.provideDecision(...);`
+   - ❌ Bad: `if (decision) { controller.provideDecision(decision); }`
+   - ✅ Good: `expect(decision).toBeDefined(); controller.provideDecision(decision);`
+
+2. **Loops without bounds** – Avoid unbounded `while` loops in tests. They can hang indefinitely if game state doesn't progress correctly. Use explicit assertions about expected state transitions instead.
+   - ❌ Bad: `while (controller.isWaitingForDecision()) { controller.provideDecision({ type: 'PASS' }); }`
+   - ✅ Good: Assert expected number of decisions or use a bounded loop with a maximum iteration count and failure assertion.
+
+3. **Silent failures** – Every test step should assert its preconditions. If a decision isn't available when expected, the test should fail immediately, not skip silently.
+   - ❌ Bad: Checking if something exists before using it without asserting
+   - ✅ Good: Asserting that required state/decisions exist before proceeding
+
+4. **Missing state assertions** – After each game action, verify the expected state changes occurred. Don't assume actions succeeded just because no exception was thrown.
+   - ❌ Bad: `controller.provideDecision(...); // assume it worked`
+   - ✅ Good: `controller.provideDecision(...); expect(controller.getState().players[...].hand).toHaveLength(expectedCount);`
 
 ## Extensibility Guidelines
 

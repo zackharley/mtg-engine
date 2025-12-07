@@ -1,13 +1,14 @@
-import { CardDefinitionId, CardId, PlayerId } from '../primitives/id';
-import { ManaColor } from '../costs/mana-costs';
-import { Card, CardDefinition } from '../card/card';
-import { GameAction } from './reducer';
+import type { Card, CardDefinition } from '../card/card';
+import type { ManaColor } from '../costs/mana-costs';
+import type { CardDefinitionId, CardId, PlayerId } from '../primitives/id';
+import type { OrderedStack } from '../primitives/ordered-stack';
+import { isEmptyOrderedStack } from '../primitives/ordered-stack';
 import { allPlayersHavePassedPriority } from '../priority/priortity';
-import { Stack } from '../stack/stack';
-import { OrderedStack, isEmptyOrderedStack } from '../primitives/ordered-stack';
-import { TurnState } from '../turn/turn-state';
+import type { Stack } from '../stack/stack';
 import { createAdvancementAction } from '../turn/phase-advancement';
 import { performTurnBasedActions } from '../turn/turn-based-actions';
+import type { TurnState } from '../turn/turn-state';
+import type { GameAction } from './reducer';
 
 export interface GameState {
   players: Record<PlayerId, PlayerState>;

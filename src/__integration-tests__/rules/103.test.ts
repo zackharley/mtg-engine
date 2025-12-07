@@ -1,6 +1,8 @@
-import { commanderGameMode, createGame } from '../../../src';
+import { createCommanderGame, createGame } from '../../../src';
 import { defineCard } from '../../../src/core/card/card';
 import { parseManaCost } from '../../../src/core/costs/mana-costs';
+import { Phase } from '../../core/turn/turn-structure';
+import { passUntilPhaseStep } from '../utils/game-navigation';
 
 //TODO: Replace with a real card
 const testCard = defineCard({
@@ -89,15 +91,64 @@ describe('Rule 103: Starting the Game', () => {
     // TODO: 103.2a - Sideboards and substitute cards
     // If any players are using sideboards or cards being represented by substitute cards,
     // those cards are set aside. After this happens, each player's deck is considered their starting deck
+
     // TODO: 103.2b - Companion ability
     // If any players wish to reveal a card with a companion ability that they own from outside the game,
     // they may do so. A player may reveal no more than one card this way, and they may do so only if
     // their deck fulfills the condition of that card's companion ability
-    // TODO: 103.2c - Commander game
-    // In a Commander game, each player puts their commander from their deck face up into the command zone
+
+    describe('103.2c: In a Commander game, each player puts their commander from their deck face up into the command zone', () => {
+      it("should place each player's commander in their command zone", () => {
+        const settings = createCommanderGame({
+          players: [
+            {
+              name: 'Alice',
+              commander: testCommander,
+              deck: [{ definition: testCard, count: 1 }],
+            },
+            {
+              name: 'Bob',
+              commander: testCommander,
+              deck: [{ definition: testCard, count: 1 }],
+            },
+            {
+              name: 'Charlie',
+              commander: testCommander,
+              deck: [{ definition: testCard, count: 1 }],
+            },
+            {
+              name: 'Dave',
+              commander: testCommander,
+              deck: [{ definition: testCard, count: 1 }],
+            },
+          ],
+        });
+        const { controller, playerIds } = createGame(settings);
+        const state = controller.getState();
+        const [playerOne, playerTwo, playerThree, playerFour] = playerIds;
+        expect(state.players[playerOne].commandZone).toHaveLength(1);
+        expect(state.players[playerTwo].commandZone).toHaveLength(1);
+        expect(state.players[playerThree].commandZone).toHaveLength(1);
+        expect(state.players[playerFour].commandZone).toHaveLength(1);
+        expect(
+          state.cards[state.players[playerOne].commandZone[0]].definitionId,
+        ).toBe(testCommander.id);
+        expect(
+          state.cards[state.players[playerTwo].commandZone[0]].definitionId,
+        ).toBe(testCommander.id);
+        expect(
+          state.cards[state.players[playerThree].commandZone[0]].definitionId,
+        ).toBe(testCommander.id);
+        expect(
+          state.cards[state.players[playerFour].commandZone[0]].definitionId,
+        ).toBe(testCommander.id);
+      });
+    });
+
     // TODO: 103.2d - Sticker sheets
     // In a constructed game, each player playing with sticker sheets reveals all of their sticker sheets
     // and chooses three of them at random. In a limited game, each player chooses up to three sticker sheets
+
     // TODO: 103.2e - Conspiracy Draft game
     // In a Conspiracy Draft game, each player puts any number of conspiracy cards from their sideboard
     // into the command zone
@@ -115,11 +166,16 @@ describe('Rule 103: Starting the Game', () => {
       const state = controller.getState();
       const [playerOne, playerTwo] = playerIds;
 
+      // After shuffling (rule 103.3) and drawing initial hands (rule 103.5),
+      // players should have 7 cards in hand and 3 remaining in library
       // Decks should be shuffled (order should be random, not deterministic)
-      expect(state.players[playerOne].library).toHaveLength(10);
-      expect(state.players[playerTwo].library).toHaveLength(10);
-      // Note: We can't easily verify randomness without multiple runs,
-      // but we can verify the deck exists and has correct card count
+      expect(state.players[playerOne].hand).toHaveLength(7);
+      expect(state.players[playerOne].library).toHaveLength(3);
+      expect(state.players[playerTwo].hand).toHaveLength(7);
+      expect(state.players[playerTwo].library).toHaveLength(3);
+      throw new Error(
+        "This test isn't doing anything because we're not shuffling the decks and it's not failing",
+      );
     });
 
     it('should set players decks as their libraries after shuffling', () => {
@@ -132,8 +188,10 @@ describe('Rule 103: Starting the Game', () => {
       const state = controller.getState();
       const [playerOne] = playerIds;
 
-      expect(state.players[playerOne].library).toHaveLength(5);
-      expect(state.players[playerOne].hand).toHaveLength(0);
+      // After shuffling (rule 103.3) and drawing initial hand (rule 103.5),
+      // player should have drawn up to 7 cards (or all available if less than 7)
+      expect(state.players[playerOne].library).toHaveLength(0);
+      expect(state.players[playerOne].hand).toHaveLength(5); // All 5 cards drawn (less than 7)
     });
 
     // TODO: 103.3 - Opponents may shuffle or cut opponents' decks
@@ -209,7 +267,7 @@ describe('Rule 103: Starting the Game', () => {
 
     describe("103.4c: In a Commander game, each player's starting life total is 40", () => {
       it("should set each player's starting life total to 40", () => {
-        const settings = commanderGameMode.apply({
+        const settings = createCommanderGame({
           players: [
             {
               name: 'Alice',
@@ -323,35 +381,58 @@ describe('Rule 103: Starting the Game', () => {
     });
 
     describe('103.8a: Two-player game draw step skip', () => {
-      it('should skip draw step for starting player in two-player game', () => {
+      it('should skip draw step for starting player in two-player game, but not for the second player', () => {
         const { controller, playerIds } = createGame({
           players: [
-            { name: 'Alice', deck: [{ definition: testCard, count: 1 }] },
-            { name: 'Bob', deck: [{ definition: testCard, count: 1 }] },
+            { name: 'Alice', deck: [{ definition: testCard, count: 10 }] },
+            { name: 'Bob', deck: [{ definition: testCard, count: 10 }] },
           ],
         });
 
-        const state = controller.getState();
-        const [playerOne] = playerIds;
+        let state = controller.getState();
+        const [playerOne, playerTwo] = playerIds;
 
-        // Starting player should not have drawn a card yet (draw step skipped)
-        // The card should still be in library
-        expect(state.players[playerOne].hand).toHaveLength(0);
-        expect(state.players[playerOne].library).toHaveLength(1);
         expect(state.turn.turnNumber).toBe(1);
-        expect(state.players[playerOne].name).toBe('Alice');
+        expect(state.turn.activePlayerId).toBe(playerOne);
+        expect(state.players[playerOne].hand).toHaveLength(7);
+        expect(state.players[playerOne].library).toHaveLength(3);
+        expect(state.players[playerTwo].hand).toHaveLength(7);
+        expect(state.players[playerTwo].library).toHaveLength(3);
+
+        passUntilPhaseStep(controller, Phase.PRECOMBAT_MAIN, null, {
+          activePlayerId: playerTwo,
+        });
+
+        state = controller.getState();
+        expect(state.turn.turnNumber).toBe(1);
+        expect(state.turn.activePlayerId).toBe(playerTwo);
+
+        // Player 1 should still have 7 cards (didn't draw during their skipped draw step)
+        expect(state.players[playerOne].hand).toHaveLength(7);
+        expect(state.players[playerOne].library).toHaveLength(3);
+        expect(state.players[playerTwo].hand).toHaveLength(8);
+        expect(state.players[playerTwo].library).toHaveLength(2);
+
+        passUntilPhaseStep(controller, Phase.PRECOMBAT_MAIN, null, {
+          activePlayerId: playerOne,
+        });
+
+        state = controller.getState();
+        expect(state.turn.turnNumber).toBe(2);
+        expect(state.turn.activePlayerId).toBe(playerOne);
+        expect(state.players[playerOne].hand).toHaveLength(8);
+        expect(state.players[playerOne].library).toHaveLength(2);
+        expect(state.players[playerTwo].hand).toHaveLength(8);
+        expect(state.players[playerTwo].library).toHaveLength(2);
       });
     });
 
     // TODO: 103.8b - Two-Headed Giant draw step skip
     // In a Two-Headed Giant game, the team who plays first skips the draw step of their first turn
 
-    // TODO: 103.8c - Other multiplayer games draw step
-    // In all other multiplayer games, no player skips the draw step of their first turn
-
-    describe('103.8d: No player shops their first draw step in other multiplayer formats', () => {
+    describe('103.8c: No player skips their first draw step in other multiplayer formats', () => {
       it('should not skip the draw step for Commander', () => {
-        const settings = commanderGameMode.apply({
+        const settings = createCommanderGame({
           players: [
             {
               name: 'Alice',

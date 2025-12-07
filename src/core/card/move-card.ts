@@ -1,8 +1,10 @@
-import { produce, Draft, castDraft } from 'immer';
-import { CardId } from '../primitives/id';
-import { GameState, ZoneName } from '../state/state';
+import type { Draft} from 'immer';
+import { castDraft,produce } from 'immer';
+
+import type { CardId } from '../primitives/id';
 import { pushOrderedStack } from '../primitives/ordered-stack';
 import { pipe } from '../state/pipe';
+import type { GameState, ZoneName } from '../state/state';
 
 export function moveCard(
   state: GameState,

@@ -1,5 +1,5 @@
-import { GameSettings, PlayerSettings } from '../../index';
-import { GameMode } from './types';
+import type { GameSettings, PlayerSettings } from '../../index';
+import type { GameMode } from './types';
 
 const COMMANDER_STARTING_LIFE = 40;
 
@@ -16,9 +16,7 @@ export const commanderGameMode: GameMode = {
   apply(settings: GameSettings): GameSettings {
     return {
       ...settings,
-      // Override starting life to 40 for Commander
       startingLife: COMMANDER_STARTING_LIFE,
-      // Ensure all players have commanders
       players: settings.players.map((player) => {
         if (!player.commander) {
           throw new Error(
@@ -37,7 +35,7 @@ export const commanderGameMode: GameMode = {
  */
 export function createCommanderGame(
   settings: Omit<GameSettings, 'startingLife'> & {
-    players: Array<PlayerSettings & { commander: PlayerSettings['commander'] }>;
+    players: (PlayerSettings & { commander: PlayerSettings['commander'] })[];
   },
 ): GameSettings {
   return commanderGameMode.apply(settings as GameSettings);

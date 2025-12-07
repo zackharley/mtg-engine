@@ -1,5 +1,5 @@
-import mountain from '../../../src/card-definitions/mountain/card';
 import { createGame } from '../../../src';
+import mountain from '../../../src/card-definitions/mountain/card';
 
 describe('Play Mountain and tap for mana', () => {
   it('moves Mountain to the battlefield tapped and adds one red mana', () => {

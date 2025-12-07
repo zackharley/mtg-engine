@@ -1,13 +1,14 @@
 import { cloneDeep } from 'lodash';
-import { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
+
+import type { ManaColor } from '../costs/mana-costs';
+import type { CardId, PlayerId, StackObjectId, TargetId } from '../primitives/id';
+import handleAdvanceToNextStep from './handlers/advance-to-next-step';
 import { handleCastSpell } from './handlers/cast-spell';
-import handleResolveTopOfStack from './handlers/resolve-top-of-stack';
-import { GameState } from './state';
 import handleDrawCard from './handlers/draw-card';
 import handlePlayLand from './handlers/play-land';
+import handleResolveTopOfStack from './handlers/resolve-top-of-stack';
 import handleTapPermanentForMana from './handlers/tap-permanent-for-mana';
-import handleAdvanceToNextStep from './handlers/advance-to-next-step';
-import { ManaColor } from '../costs/mana-costs';
+import type { GameState } from './state';
 
 export interface ReduceContext {
   state: GameState;

@@ -1,7 +1,7 @@
-import { GameState } from '../state/state';
-import { PlayerId } from '../primitives/id';
-import { AvailablePlayerDecision } from '../state/reducer';
+import type { PlayerId } from '../primitives/id';
 import { isEmptyOrderedStack } from '../primitives/ordered-stack';
+import type { AvailablePlayerDecision } from '../state/reducer';
+import type { GameState } from '../state/state';
 
 /**
  * Gets the maximum number of lands a player can play per turn.

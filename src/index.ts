@@ -1,16 +1,19 @@
-import { CardDefinition } from './core/card/card';
-import { registerCardForPlayer } from './core/deck/deck';
-import { ManaColor } from './core/costs/mana-costs';
-import { createOrderedStack } from './core/primitives/ordered-stack';
-import { makePlayerId, PlayerId, makeCardId } from './core/primitives/id';
-import { GameState } from './core/state/state';
+import { produce } from 'immer';
+
+import type { CardDefinition } from './core/card/card';
+import type { ManaColor } from './core/costs/mana-costs';
+import { drawInitialHand,registerCardForPlayer } from './core/deck/deck';
+import type {
+  GameController} from './core/engine/game-controller';
 import {
-  createGameController,
-  GameController,
+  createGameController
 } from './core/engine/game-controller';
+import type { PlayerId} from './core/primitives/id';
+import { makeCardId,makePlayerId } from './core/primitives/id';
+import { createOrderedStack } from './core/primitives/ordered-stack';
+import type { GameState } from './core/state/state';
 import { createInitialTurnState } from './core/turn/turn-state';
 import { Phase, Step } from './core/turn/turn-structure';
-import { produce } from 'immer';
 
 const DEFAULT_STARTING_LIFE = 20;
 
@@ -39,8 +42,11 @@ export type { PlayerDecision } from './core/engine/game-controller';
 export type { GameController } from './core/engine/game-controller';
 
 // Re-export game modes
-export { commanderGameMode, createCommanderGame } from './core/game-modes';
-export type { GameMode } from './core/game-modes';
+export {
+  commanderGameMode,
+  createCommanderGame,
+} from './core/game-modes/commander';
+export type { GameMode } from './core/game-modes/types';
 
 /**
  * Creates a new game and returns a GameController that manages the game loop.
@@ -65,6 +71,7 @@ export function createGame(settings: GameSettings): {
     stack: createOrderedStack(),
     turn: {
       activePlayerId: '' as PlayerId, // Will be set after first player is created
+      startingPlayerId: '' as PlayerId, // Will be set after first player is created
       phase: Phase.BEGINNING,
       step: Step.UNTAP,
       turnNumber: 1,
@@ -81,6 +88,22 @@ export function createGame(settings: GameSettings): {
     defaultManaPool,
   );
   state = updatedState;
+
+  // TODO: Rule 103.3 - Shuffle decks (currently decks are in random order from registration)
+  // Each player shuffles their deck so that the cards are in a random order.
+  // Each player may then shuffle or cut their opponents' decks.
+
+  // Rule 103.5 - Draw initial hands
+  // Each player draws a number of cards equal to their starting hand size, which is normally seven.
+  state = drawInitialHands(state, playerIds);
+
+  // TODO: Rule 103.5 - Mulligan process
+  // A player who is dissatisfied with their initial hand may take a mulligan.
+  // First, the starting player declares whether they will take a mulligan.
+  // Then each other player in turn order does the same.
+  // Once each player has made a declaration, all players who decided to take mulligans do so at the same time.
+  // This process is then repeated until no player takes a mulligan.
+  // For now, we skip the mulligan process and proceed directly to the first turn.
 
   // Initialize turn state with first player as starting player
   if (playerIds.length > 0) {
@@ -176,6 +199,25 @@ function makeEmptyManaPool(): ManaPool {
     R: 0,
     G: 0,
   };
+}
+
+const DEFAULT_STARTING_HAND_SIZE = 7;
+
+/**
+ * Draws initial hands for all players during game setup.
+ * Based on rule 103.5: Each player draws a number of cards equal to their starting hand size,
+ * which is normally seven.
+ *
+ * @param state - The current game state
+ * @param playerIds - Array of player IDs to draw initial hands for
+ * @returns Updated game state with initial hands drawn
+ */
+function drawInitialHands(state: GameState, playerIds: PlayerId[]): GameState {
+  // Draw initial hands for all players
+  // Rule 103.5: Each player draws a number of cards equal to their starting hand size
+  return playerIds.reduce<GameState>((currentState, playerId) => {
+    return drawInitialHand(currentState, playerId, DEFAULT_STARTING_HAND_SIZE);
+  }, state);
 }
 
 /**

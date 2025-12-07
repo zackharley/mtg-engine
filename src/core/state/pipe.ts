@@ -1,4 +1,4 @@
-import { Draft } from 'immer';
+import type { Draft } from 'immer';
 
 type DraftMutation<T> = (draft: Draft<T>) => Draft<T>;
 

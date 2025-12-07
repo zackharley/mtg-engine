@@ -1,10 +1,11 @@
-import { produce, castDraft } from 'immer';
-import { GameAction, ReduceContext } from '../reducer';
+import { castDraft,produce } from 'immer';
+
+import type { SpellAbility } from '../../card/card';
 import { payManaCost } from '../../costs/pay-mana';
-import { pushOrderedStack } from '../../primitives/ordered-stack';
 import { makeStackObjectId } from '../../primitives/id';
-import { SpellAbility } from '../../card/card';
+import { pushOrderedStack } from '../../primitives/ordered-stack';
 import { resetPriorityPasses } from '../../priority/priortity';
+import type { GameAction, ReduceContext } from '../reducer';
 
 export function handleCastSpell(
   ctx: ReduceContext,
