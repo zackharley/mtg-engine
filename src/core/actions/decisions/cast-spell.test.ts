@@ -2,11 +2,15 @@ import {
   createStateWithCardInHand,
   createTestContext,
 } from '@/__tests__/test-utils';
+import lightningBolt from '@/card-definitions/lightning-bolt/card';
 
 import { defineCard } from '../../card/card';
 import { parseManaCost } from '../../costs/mana-costs';
 import { makePlayerId } from '../../primitives/id';
-import type { AvailablePlayerDecision } from '../../state/reducer';
+import type {
+  AvailablePlayerDecision,
+  ReduceContext,
+} from '../../state/reducer';
 import { addCastSpellDecisions } from './cast-spell';
 
 describe('cast-spell decisions', () => {
@@ -21,9 +25,8 @@ describe('cast-spell decisions', () => {
         abilities: [
           {
             type: 'spell',
-            text: 'Deal 3 damage',
+            text: 'Draw a card',
             effect: jest.fn(),
-            targets: jest.fn().mockReturnValue([]),
           },
         ],
       });
@@ -60,9 +63,8 @@ describe('cast-spell decisions', () => {
         abilities: [
           {
             type: 'spell',
-            text: 'Deal 3 damage',
+            text: 'Draw a card',
             effect: jest.fn(),
-            targets: jest.fn().mockReturnValue([]),
           },
         ],
       });
@@ -166,9 +168,8 @@ describe('cast-spell decisions', () => {
         abilities: [
           {
             type: 'spell',
-            text: 'Deal 3 damage',
+            text: 'Draw a card',
             effect: jest.fn(),
-            targets: jest.fn().mockReturnValue([]),
           },
         ],
       });
@@ -207,9 +208,8 @@ describe('cast-spell decisions', () => {
         abilities: [
           {
             type: 'spell',
-            text: 'Deal 3 damage',
+            text: 'Draw a card',
             effect: jest.fn(),
-            targets: jest.fn().mockReturnValue([]),
           },
         ],
       });
@@ -226,6 +226,125 @@ describe('cast-spell decisions', () => {
       expect(decisions).not.toBe(initialDecisions);
       expect(initialDecisions).toHaveLength(0);
       expect(decisions).toHaveLength(1);
+    });
+
+    it('adds CAST_SPELL decision for Lightning Bolt when valid targets exist', () => {
+      const playerId = makePlayerId();
+      const { state, cardIds } = createStateWithCardInHand(
+        playerId,
+        lightningBolt,
+        1,
+      );
+      const cardId = cardIds[0];
+
+      const initialDecisions: AvailablePlayerDecision[] = [];
+      const decisions = addCastSpellDecisions(
+        state,
+        playerId,
+        initialDecisions,
+      );
+
+      // Should add decision because Lightning Bolt has valid targets (other players)
+      expect(decisions).toHaveLength(1);
+      expect(decisions[0]).toEqual({
+        type: 'CAST_SPELL',
+        cardId,
+        targets: [],
+      });
+    });
+
+    it('does not add CAST_SPELL decision when no valid targets exist', () => {
+      const playerId = makePlayerId();
+      const restrictiveSpell = defineCard({
+        scryfallId: 'test-restrictive',
+        name: 'Restrictive Spell',
+        type: 'instant',
+        manaCost: parseManaCost('{1}'),
+        abilities: [
+          {
+            type: 'spell',
+            text: 'Target opponent',
+            effect: jest.fn(),
+            targets: () => [
+              {
+                description: 'Opponent only',
+                minTargets: 1,
+                maxTargets: 1,
+                validate: ({
+                  candidateId,
+                }: {
+                  candidateId: string;
+                  ctx: ReduceContext;
+                }) => {
+                  // Only allow targeting opponents (not self)
+                  return candidateId !== playerId;
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      // Create state with only one player (no opponents)
+      const ctx = createTestContext({
+        playerId,
+        numPlayers: 1,
+      });
+      const cardId = ctx.state.players[playerId].hand[0];
+      ctx.state.cards[cardId] = {
+        id: cardId,
+        definitionId: restrictiveSpell.id,
+        controllerId: playerId,
+      };
+      ctx.state.cardDefinitions[restrictiveSpell.id] = restrictiveSpell;
+      ctx.state.players[playerId].hand = [cardId];
+
+      const initialDecisions: AvailablePlayerDecision[] = [];
+      const decisions = addCastSpellDecisions(
+        ctx.state,
+        playerId,
+        initialDecisions,
+      );
+
+      expect(decisions).toHaveLength(0);
+    });
+
+    it('adds CAST_SPELL decision for spells without targeting requirements', () => {
+      const playerId = makePlayerId();
+      const spellWithoutTargets = defineCard({
+        scryfallId: 'test-spell',
+        name: 'Test Spell',
+        type: 'instant',
+        manaCost: parseManaCost('{1}'),
+        abilities: [
+          {
+            type: 'spell',
+            text: 'Do something',
+            effect: jest.fn(),
+          },
+        ],
+      });
+
+      const { state, cardIds } = createStateWithCardInHand(
+        playerId,
+        spellWithoutTargets,
+        1,
+      );
+      const cardId = cardIds[0];
+
+      const initialDecisions: AvailablePlayerDecision[] = [];
+      const decisions = addCastSpellDecisions(
+        state,
+        playerId,
+        initialDecisions,
+      );
+
+      expect(decisions).toHaveLength(1);
+      expect(decisions[0]).toEqual({
+        type: 'CAST_SPELL',
+        cardId,
+        targets: [],
+      });
     });
   });
 });

@@ -29,7 +29,6 @@ describe('available-decisions', () => {
             type: 'spell',
             text: 'Deal 3 damage',
             effect: jest.fn(),
-            targets: jest.fn().mockReturnValue([]),
           },
         ],
       });

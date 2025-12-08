@@ -24,7 +24,6 @@ import type { GameController, GameSettings, PlayerDecision } from '@/index';
 import { createGame } from '@/index';
 
 const GAME_LOOP_DELAY_MS = 100;
-const ERROR_DISPLAY_DELAY_MS = 2000;
 
 export interface TUIClientOptions {
   /**
@@ -75,53 +74,11 @@ export class TUIClient implements Client {
       this.controller.provideDecision(decision);
       this.render(this.controller.getState());
     } catch (error) {
-      // Display error message to user
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      const fullErrorMessage = `{red-fg}Error: ${errorMessage}{/red-fg}`;
-
-      // Set status message explicitly (don't let render overwrite it)
-      this.statusMessage = fullErrorMessage;
-
-      // Update top bar with error message
-      if (this.screen && this.layout && this.controller) {
-        const state = this.controller.getState();
-        const turnInfo = formatTurnInfo(state.turn);
-        const players = Object.entries(state.players).map(
-          ([playerId, player]) => {
-            const playerInfo = formatPlayerInfo(player, playerId as PlayerId);
-            const manaPool = formatManaPool(player.manaPool);
-            return `${playerInfo} | Mana: ${manaPool}`;
-          },
-        );
-
-        const lines = [
-          turnInfo,
-          '',
-          ...players,
-          '',
-          `{cyan-fg}Status: {/cyan-fg}${fullErrorMessage}`,
-        ];
-        this.layout.topBar.setContent(lines.join('\n'));
-      }
-
-      // Also log error to event log for visibility
       if (this.eventLog) {
         this.eventLog.addError(errorMessage);
       }
-
-      // Force a full screen render to ensure error is visible
-      if (this.screen) {
-        this.screen.render();
-      }
-
-      // Small delay to ensure render completes
-      // This is a workaround - blessed should handle this but sometimes needs a tick
-      setImmediate(() => {
-        if (this.screen) {
-          this.screen.render();
-        }
-      });
 
       // Throw error so caller knows it failed
       throw error;
@@ -216,22 +173,16 @@ export class TUIClient implements Client {
     // Update decisions menu
     updateDecisionsMenu(this.layout.rightPanel, availableDecisions, state);
 
-    // Show available decisions count in status (only if no existing status message)
-    // Don't overwrite error messages - they should persist until cleared
-    if (!this.statusMessage?.includes('Error:')) {
-      if (availableDecisions.length > 0) {
-        const player = state.players[playerId];
-        const playerName = player?.name || playerId;
-        this.statusMessage = `{green-fg}${playerName} - ${availableDecisions.length} decision(s) available. Press 1-${availableDecisions.length} to select.{/green-fg}`;
-      } else {
-        this.statusMessage =
-          '{yellow-fg}No decisions available. Waiting for game to advance...{/yellow-fg}';
-      }
-      this.updateTopBarWithStatus();
+    // Show available decisions count in status
+    if (availableDecisions.length > 0) {
+      const player = state.players[playerId];
+      const playerName = player?.name || playerId;
+      this.statusMessage = `{green-fg}${playerName} - ${availableDecisions.length} decision(s) available. Press 1-${availableDecisions.length} to select.{/green-fg}`;
     } else {
-      // Status message already set (likely an error), just ensure it's displayed
-      this.updateTopBarWithStatus();
+      this.statusMessage =
+        '{yellow-fg}No decisions available. Waiting for game to advance...{/yellow-fg}';
     }
+    this.updateTopBarWithStatus();
   }
 
   private startGameLoop(): void {
@@ -395,11 +346,7 @@ export class TUIClient implements Client {
       this.handleDecision(playerId, decision);
       setTimeout(() => this.startGameLoop(), GAME_LOOP_DELAY_MS);
     } catch {
-      // Error was displayed in handleDecision, now restart loop after delay
-      setTimeout(() => {
-        this.clearStatusMessage();
-        this.startGameLoop();
-      }, ERROR_DISPLAY_DELAY_MS);
+      setTimeout(() => this.startGameLoop(), GAME_LOOP_DELAY_MS);
     }
   }
 

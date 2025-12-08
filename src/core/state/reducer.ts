@@ -105,7 +105,7 @@ export function reduce(
   return { state: ctx.state, events: ctx.events };
 }
 
-function makeContext(state: GameState): ReduceContext {
+export function makeContext(state: GameState): ReduceContext {
   return {
     state: cloneDeep(state),
     events: [],

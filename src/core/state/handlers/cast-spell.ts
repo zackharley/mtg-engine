@@ -7,6 +7,7 @@ import { makeStackObjectId } from '../../primitives/id';
 import { pushOrderedStack } from '../../primitives/ordered-stack';
 import { resetPriorityPasses } from '../../priority/priortity';
 import type { StackObject } from '../../stack/stack';
+import { validateTargets } from '../../targeting/validate-targets';
 import type { GameAction, ReduceContext } from '../reducer';
 import type { GameState } from '../state';
 
@@ -22,6 +23,8 @@ export function handleCastSpell(
     playerId,
     cardId,
   );
+
+  validateTargets(state, spellAbility, targets, playerId);
 
   // Pay mana cost
   ctx.state = payManaCost(state, playerId, cardDefinition.manaCost);
