@@ -30,7 +30,28 @@ describe('game-state-renderer', () => {
         commandZone: [],
       };
       const result = formatPlayerInfo(player, playerId);
-      expect(result).toBe('Alice (Life: 20)');
+      // Inactive players have 2 spaces reserved for alignment
+      expect(result).toBe('  Alice (Life: 20)');
+    });
+
+    it('formats active player info with indicator', () => {
+      const playerId = makePlayerId();
+      const _cardId1 = makeCardId();
+      const player = {
+        name: 'Bob',
+        life: 15,
+        manaPool: { W: 0, U: 0, B: 0, R: 0, G: 0 },
+        hand: [],
+        battlefield: [],
+        graveyard: createOrderedStack<typeof _cardId1>(),
+        library: createOrderedStack<typeof _cardId1>(),
+        commandZone: [],
+      };
+      const result = formatPlayerInfo(player, playerId, true);
+      expect(result).toContain('▶');
+      expect(result).toContain('Bob');
+      expect(result).toContain('Life: 15');
+      expect(result).toContain('{green-fg}');
     });
   });
 
@@ -140,9 +161,20 @@ describe('game-state-renderer', () => {
         landPlayedThisTurn: 0,
       };
       const result = formatTurnInfo(turn);
-      expect(result).toContain('Turn 1');
-      expect(result).toContain('BEGINNING');
-      expect(result).toContain('UNTAP');
+      expect(result).toBe('Turn 1 - BEGINNING / UNTAP');
+    });
+
+    it('formats turn info without step when step is null', () => {
+      const turn = {
+        activePlayerId: makePlayerId(),
+        startingPlayerId: makePlayerId(),
+        phase: Phase.BEGINNING,
+        step: null,
+        turnNumber: 1,
+        landPlayedThisTurn: 0,
+      };
+      const result = formatTurnInfo(turn);
+      expect(result).toBe('Turn 1 - BEGINNING');
     });
   });
 });

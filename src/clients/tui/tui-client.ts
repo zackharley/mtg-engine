@@ -17,6 +17,7 @@ import {
   createLayout,
   type LayoutRegions,
 } from '@/clients/tui/utils/layout-manager';
+import { getPlayerColor } from '@/clients/tui/utils/player-colors';
 import type { PlayerId } from '@/core/primitives/id';
 import type { AvailablePlayerDecision, GameEvent } from '@/core/state/reducer';
 import type { GameState } from '@/core/state/state';
@@ -156,6 +157,13 @@ export class TUIClient implements Client {
     if (!this.screen || !this.layout || !this.controller) {
       return;
     }
+
+    // Determine who has priority
+    const priorityPlayerId =
+      this.controller.getPlayerNeedingDecision() ?? state.turn.activePlayerId;
+
+    // Update panel borders to show priority
+    this.updatePanelBorders(priorityPlayerId);
 
     // Update game state panel (with status if any)
     this.updateTopBarWithStatus();
@@ -508,14 +516,58 @@ export class TUIClient implements Client {
     this.updateTopBarWithStatus();
   }
 
+  private updatePanelBorders(priorityPlayerId: PlayerId | undefined): void {
+    if (!this.layout) {
+      return;
+    }
+
+    const color = priorityPlayerId
+      ? getPlayerColor(priorityPlayerId)
+      : undefined;
+
+    // Update border colors for all panels
+    // In blessed, we set style.border.fg to change the border color
+    const panels = [
+      this.layout.leftPanel,
+      this.layout.centerPanel,
+      this.layout.rightPanel,
+      this.layout.bottomPanel,
+    ];
+
+    panels.forEach((panel) => {
+      // Type assertion for blessed style object
+      const style = panel.style as {
+        border?: { type?: string; fg?: string };
+      };
+
+      if (color) {
+        // Set border color
+        const currentBorder = style.border ?? {};
+        style.border = { ...currentBorder, fg: color };
+      } else {
+        // Reset to default (remove color override)
+        if (style.border) {
+          const { fg: _fg, ...rest } = style.border;
+          style.border = rest;
+        }
+      }
+    });
+  }
+
   private updateTopBarWithStatus(): void {
     if (!this.screen || !this.layout || !this.controller) {
       return;
     }
     const state = this.controller.getState();
-    const turnInfo = formatTurnInfo(state.turn);
+    const turnInfo = formatTurnInfo(state.turn, state);
+    const activePlayerId = state.turn.activePlayerId;
     const players = Object.entries(state.players).map(([playerId, player]) => {
-      const playerInfo = formatPlayerInfo(player, playerId as PlayerId);
+      const isActive = (playerId as PlayerId) === activePlayerId;
+      const playerInfo = formatPlayerInfo(
+        player,
+        playerId as PlayerId,
+        isActive,
+      );
       const manaPool = formatManaPool(player.manaPool);
       return `${playerInfo} | Mana: ${manaPool}`;
     });

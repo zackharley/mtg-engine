@@ -8,12 +8,18 @@ type PlayerState = GameState['players'][PlayerId];
 
 /**
  * Formats player information for display.
+ * Always reserves space for the active indicator to prevent layout shift.
  */
 export function formatPlayerInfo(
   player: PlayerState,
   _playerId: PlayerId,
+  isActive = false,
 ): string {
-  return `${player.name} (Life: ${player.life})`;
+  // Always reserve space for indicator (2 chars: "▶ " or "  ")
+  const activeIndicator = isActive ? '{green-fg}▶ {/green-fg}' : '  ';
+  const nameColor = isActive ? '{green-fg}' : '';
+  const nameColorEnd = isActive ? '{/green-fg}' : '';
+  return `${activeIndicator}${nameColor}${player.name}${nameColorEnd} (Life: ${player.life})`;
 }
 
 /**
@@ -109,9 +115,9 @@ export function formatStack(stack: Stack, state: GameState): string[] {
 /**
  * Formats turn information for display.
  */
-export function formatTurnInfo(turn: TurnState): string {
+export function formatTurnInfo(turn: TurnState, _state?: GameState): string {
   const stepStr = turn.step ? ` / ${turn.step}` : '';
-  return `Turn ${turn.turnNumber} - ${turn.phase}${stepStr} (Active: ${turn.activePlayerId})`;
+  return `Turn ${turn.turnNumber} - ${turn.phase}${stepStr}`;
 }
 
 /**

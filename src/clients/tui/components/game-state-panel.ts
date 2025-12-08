@@ -15,9 +15,11 @@ export function updateGameStatePanel(
   panel: blessed.Widgets.BoxElement,
   state: GameState,
 ): void {
-  const turnInfo = formatTurnInfo(state.turn);
+  const turnInfo = formatTurnInfo(state.turn, state);
+  const activePlayerId = state.turn.activePlayerId;
   const players = Object.entries(state.players).map(([playerId, player]) => {
-    const playerInfo = formatPlayerInfo(player, playerId as PlayerId);
+    const isActive = (playerId as PlayerId) === activePlayerId;
+    const playerInfo = formatPlayerInfo(player, playerId as PlayerId, isActive);
     const manaPool = formatManaPool(player.manaPool);
     return `${playerInfo} | Mana: ${manaPool}`;
   });
