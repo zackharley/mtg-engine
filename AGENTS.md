@@ -181,6 +181,25 @@ This abstraction ensures clients can:
 - Access the underlying game controller
 - Clean up resources on shutdown
 
+#### Client Boundaries and GameController
+
+**CRITICAL ARCHITECTURAL PRINCIPLE**: Clients must NEVER import core game logic directly from `@/core/` modules. The `GameController` interface (`@/core/engine/game-controller.ts`) is the ONLY interface for:
+
+- Performing game actions (via `provideDecision()`)
+- Querying game state (via `getState()`)
+- Introspecting game information (via `getAvailableDecisions()`, `getTargetingInfo()`, etc.)
+- Subscribing to game events (via `onEvents()`)
+
+All game logic queries and operations must go through `GameController` methods. This ensures:
+
+- **Separation of concerns** – Clients remain presentation/input layers, not game logic layers
+- **Consistency** – All clients use the same interface, ensuring consistent behavior
+- **Testability** – Core logic can be tested independently of client implementations
+- **Maintainability** – Changes to core logic don't require changes to client code
+- **Single source of truth** – `GameController` is the authoritative interface for game interactions
+
+If a client needs information that isn't available through `GameController`, add a new method to the interface rather than importing core logic directly.
+
 ### Terminal UI (TUI) Client
 
 The TUI client (`@/clients/tui/tui-client.ts`) provides a full-featured terminal-based interface using the `blessed` library. It demonstrates how to build a complete client implementation.

@@ -23,6 +23,7 @@ interface TargetSelectorContext {
   minTargets: number;
   maxTargets: number;
   resolve: (value: TargetId[] | null) => void;
+  removeKeyListener: () => void;
 }
 
 interface TargetToggleOptions {
@@ -37,6 +38,7 @@ interface TargetToggleOptions {
   state: GameState;
   selectedIndex: number;
   resolve: (value: TargetId[] | null) => void;
+  removeKeyListener: () => void;
 }
 
 interface ListDisplayOptions {
@@ -69,6 +71,7 @@ interface EnterOptions {
   list: blessed.Widgets.BoxElement;
   state: GameState;
   resolve: (value: TargetId[] | null) => void;
+  removeKeyListener: () => void;
 }
 
 interface NumericKeyOptions {
@@ -83,6 +86,7 @@ interface NumericKeyOptions {
   state: GameState;
   selectedIndex: number;
   resolve: (value: TargetId[] | null) => void;
+  removeKeyListener: () => void;
 }
 
 interface ConfirmOptions {
@@ -92,6 +96,7 @@ interface ConfirmOptions {
   screen: blessed.Widgets.Screen;
   modal: blessed.Widgets.BoxElement;
   resolve: (value: TargetId[] | null) => void;
+  removeKeyListener: () => void;
 }
 
 /**
@@ -115,6 +120,15 @@ export function selectTargets(
 
     const selected = new Set<TargetId>();
 
+    // Set up key handler with cleanup function
+    let keyHandler: ((ch: string, key: { name: string }) => void) | null = null;
+    const removeKeyListener = (): void => {
+      if (keyHandler) {
+        screen.removeListener('keypress', keyHandler);
+        keyHandler = null;
+      }
+    };
+
     // Handle input
     const handleKey = createKeyHandler({
       screen,
@@ -126,12 +140,15 @@ export function selectTargets(
       minTargets,
       maxTargets,
       resolve,
+      removeKeyListener,
     });
 
     // Initialize display
     handleKey('', { name: 'init' });
 
-    screen.once('keypress', handleKey);
+    // Set up persistent key handler
+    keyHandler = handleKey;
+    screen.on('keypress', keyHandler);
     screen.render();
   });
 }
@@ -149,6 +166,7 @@ function createKeyHandler(
     minTargets,
     maxTargets,
     resolve,
+    removeKeyListener,
   } = context;
   let selectedIndex = 0;
 
@@ -158,7 +176,7 @@ function createKeyHandler(
       return;
     }
 
-    if (handleEscape(key, screen, modal, resolve)) {
+    if (handleEscape(key, screen, modal, resolve, removeKeyListener)) {
       return;
     }
 
@@ -189,6 +207,7 @@ function createKeyHandler(
         list,
         state,
         resolve,
+        removeKeyListener,
       })
     ) {
       return;
@@ -207,12 +226,21 @@ function createKeyHandler(
         state,
         selectedIndex,
         resolve,
+        removeKeyListener,
       })
     ) {
       return;
     }
 
-    handleConfirm({ ch, selected, minTargets, screen, modal, resolve });
+    handleConfirm({
+      ch,
+      selected,
+      minTargets,
+      screen,
+      modal,
+      resolve,
+      removeKeyListener,
+    });
   };
 
   return handler;
@@ -223,10 +251,12 @@ function handleEscape(
   screen: blessed.Widgets.Screen,
   modal: blessed.Widgets.BoxElement,
   resolve: (value: TargetId[] | null) => void,
+  removeKeyListener: () => void,
 ): boolean {
   if (key.name !== 'escape') {
     return false;
   }
+  removeKeyListener();
   screen.remove(modal);
   screen.render();
   resolve(null);
@@ -276,6 +306,7 @@ function handleEnter(options: EnterOptions): boolean {
     list,
     state,
     resolve,
+    removeKeyListener,
   } = options;
   if (key.name !== 'enter' && key.name !== 'return') {
     return false;
@@ -292,6 +323,7 @@ function handleEnter(options: EnterOptions): boolean {
     state,
     selectedIndex,
     resolve,
+    removeKeyListener,
   });
   return true;
 }
@@ -309,6 +341,7 @@ function handleNumericKey(options: NumericKeyOptions): boolean {
     state,
     selectedIndex,
     resolve,
+    removeKeyListener,
   } = options;
   const num = parseInt(ch, 10);
   if (isNaN(num) || num < 1 || num > validTargets.length) {
@@ -326,14 +359,24 @@ function handleNumericKey(options: NumericKeyOptions): boolean {
     state,
     selectedIndex,
     resolve,
+    removeKeyListener,
   });
   return true;
 }
 
 function handleConfirm(options: ConfirmOptions): void {
-  const { ch, selected, minTargets, screen, modal, resolve } = options;
+  const {
+    ch,
+    selected,
+    minTargets,
+    screen,
+    modal,
+    resolve,
+    removeKeyListener,
+  } = options;
   if (ch === 'c' || ch === 'C') {
     if (selected.size >= minTargets) {
+      removeKeyListener();
       screen.remove(modal);
       screen.render();
       resolve(Array.from(selected));
@@ -354,6 +397,7 @@ function handleTargetToggle(options: TargetToggleOptions): void {
     state,
     selectedIndex,
     resolve,
+    removeKeyListener,
   } = options;
 
   if (selected.has(targetId)) {
@@ -365,6 +409,7 @@ function handleTargetToggle(options: TargetToggleOptions): void {
   screen.render();
 
   if (selected.size >= minTargets) {
+    removeKeyListener();
     screen.remove(modal);
     screen.render();
     resolve(Array.from(selected));

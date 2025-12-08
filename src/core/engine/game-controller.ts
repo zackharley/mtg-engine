@@ -1,10 +1,12 @@
 import { getAvailableDecisions } from '../actions/available-decisions';
+import type { SpellAbility } from '../card/card';
 import type { CardId, PlayerId, TargetId } from '../primitives/id';
 import { markPlayerPassedPriority } from '../priority/priortity';
 import type { AvailablePlayerDecision, GameEvent } from '../state/reducer';
-import { reduce } from '../state/reducer';
+import { makeContext, reduce } from '../state/reducer';
 import type { GameState } from '../state/state';
 import { processTurnBasedActions } from '../state/state';
+import { getValidTargets } from '../targeting/get-valid-targets';
 import { runGame } from './engine';
 
 export type PlayerDecision =
@@ -24,6 +26,11 @@ export interface GameController {
   getAvailableDecisions(): AvailablePlayerDecision[];
   provideDecision(decision: PlayerDecision): void;
   onEvents(callback: (events: GameEvent[], state: GameState) => void): void;
+  getTargetingInfo(cardId: CardId): {
+    validTargets: TargetId[];
+    minTargets: number;
+    maxTargets: number;
+  } | null;
 }
 
 type EventCallback = (events: GameEvent[], state: GameState) => void;
@@ -186,6 +193,51 @@ export function createGameController(initialState: GameState): GameController {
 
     onEvents(callback: EventCallback) {
       eventCallbacks.push(callback);
+    },
+
+    getTargetingInfo(cardId: CardId) {
+      const card = state.cards[cardId];
+      if (!card) {
+        return null;
+      }
+
+      const definition = state.cardDefinitions[card.definitionId];
+      if (!definition) {
+        return null;
+      }
+
+      const spellAbility = definition.abilities.find(
+        (a): a is SpellAbility => a.type === 'spell',
+      );
+      if (!spellAbility?.targets) {
+        return null;
+      }
+
+      // Get the player who would be casting this spell
+      // Use the player needing decision if available, otherwise use the card's controller
+      const playerId = pendingDecision?.playerId ?? card.controllerId;
+
+      // Get targeting requirements
+      const ctx = makeContext(state);
+      const targetRequirements = spellAbility.targets(ctx);
+
+      // If no target requirements, return null
+      if (targetRequirements.length === 0) {
+        return null;
+      }
+
+      // For now, we assume spells have a single targeting requirement
+      // Multi-target spells would need more complex logic
+      const targetRequirement = targetRequirements[0];
+
+      // Get valid targets using core targeting logic
+      const validTargets = getValidTargets(state, spellAbility, playerId);
+
+      return {
+        validTargets,
+        minTargets: targetRequirement.minTargets,
+        maxTargets: targetRequirement.maxTargets,
+      };
     },
   };
 }

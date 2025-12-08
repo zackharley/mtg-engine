@@ -296,11 +296,15 @@ export class TUIClient implements Client {
     decision: PlayerDecision,
     state: GameState,
   ): Promise<PlayerDecision | null> {
-    if (decision.type !== 'CAST_SPELL' || decision.targets) {
+    // Only handle CAST_SPELL decisions that don't already have targets selected
+    if (
+      decision.type !== 'CAST_SPELL' ||
+      (decision.targets && decision.targets.length > 0)
+    ) {
       return decision;
     }
 
-    if (!this.screen) {
+    if (!this.screen || !this.controller) {
       setTimeout(() => this.startGameLoop(), GAME_LOOP_DELAY_MS);
       return null;
     }
@@ -315,12 +319,22 @@ export class TUIClient implements Client {
       return decision;
     }
 
-    const spellAbility = definition.abilities.find((a) => a.type === 'spell');
-    if (!spellAbility?.targets) {
+    // Get targeting information from controller
+    const targetingInfo = this.controller.getTargetingInfo(decision.cardId);
+    if (!targetingInfo) {
+      // No targeting requirements, return decision as-is
       return decision;
     }
 
-    const validTargets = this.getValidTargets(state, spellAbility);
+    const { validTargets, minTargets, maxTargets } = targetingInfo;
+
+    // If minTargets is 0 (optional targeting) and no valid targets, allow casting without targets
+    if (minTargets === 0 && validTargets.length === 0) {
+      return decision;
+    }
+
+    // If no valid targets but targeting is required, return decision as-is
+    // (The validation will happen when the decision is provided)
     if (validTargets.length === 0) {
       return decision;
     }
@@ -329,8 +343,8 @@ export class TUIClient implements Client {
       validTargets,
       state,
       title: `Select targets for ${definition.name}`,
-      minTargets: 1,
-      maxTargets: 1, // Simplified - would use actual min/max from ability
+      minTargets,
+      maxTargets,
     });
 
     if (!targets) {
@@ -513,14 +527,5 @@ export class TUIClient implements Client {
 
     this.layout.topBar.setContent(lines.join('\n'));
     this.screen.render();
-  }
-
-  private getValidTargets(
-    _state: GameState,
-    _ability: { targets?: unknown },
-  ): PlayerId[] {
-    // Simplified - would need proper target validation
-    // For now, return all player IDs
-    return Object.keys(_state.players) as PlayerId[];
   }
 }
