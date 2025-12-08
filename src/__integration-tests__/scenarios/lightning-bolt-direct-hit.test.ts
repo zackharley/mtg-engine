@@ -1,5 +1,5 @@
-import lightningBolt from '@/card-definitions/lightning-bolt/card';
-import mountain from '@/card-definitions/mountain/card';
+import lightningBolt from '@/card-definitions/cards/lightning-bolt/card';
+import mountain from '@/card-definitions/cards/mountain/card';
 import type { GameEvent } from '@/core/state/reducer';
 import { createGame } from '@/index';
 

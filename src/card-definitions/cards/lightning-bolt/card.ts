@@ -1,8 +1,8 @@
 import { produce } from 'immer';
 
-import type { AbilityEffect } from '../../core/card/card';
-import { defineCard } from '../../core/card/card';
-import { parseManaCost } from '../../core/costs/mana-costs';
+import type { AbilityEffect } from '../../../core/card/card';
+import { defineCard } from '../../../core/card/card';
+import { parseManaCost } from '../../../core/costs/mana-costs';
 
 const dealThreeDamage: AbilityEffect = (
   ctx,

@@ -31,9 +31,16 @@ export function addTapPermanentForManaDecisions(
 
       // TODO: Check if the card has a mana ability
       // Currently simplified - just check if it's a basic land
+      const basicLandNames = [
+        'plains',
+        'island',
+        'swamp',
+        'mountain',
+        'forest',
+      ];
       if (
         definition.type === 'land' &&
-        definition.name.toLowerCase() === 'mountain'
+        basicLandNames.includes(definition.name.toLowerCase())
       ) {
         draft.push({ type: 'TAP_PERMANENT_FOR_MANA', cardId });
       }

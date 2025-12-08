@@ -3,12 +3,25 @@ import {
   createTestContext,
   createTestPlayer,
 } from '@/__tests__/test-utils';
-import mountain from '@/card-definitions/mountain/card';
+import forest from '@/card-definitions/cards/forest/card';
+import island from '@/card-definitions/cards/island/card';
+import mountain from '@/card-definitions/cards/mountain/card';
+import plains from '@/card-definitions/cards/plains/card';
+import swamp from '@/card-definitions/cards/swamp/card';
+import type { ManaColor } from '@/core/costs/mana-costs';
 
 import { registerCardForPlayer } from '../../deck/deck';
 import { makeCardId, makePlayerId } from '../../primitives/id';
 import { createOrderedStack } from '../../primitives/ordered-stack';
 import handleTapPermanentForMana from './tap-permanent-for-mana';
+
+const basicLands = [
+  { name: 'Plains', definition: plains, manaColor: 'W' as ManaColor },
+  { name: 'Island', definition: island, manaColor: 'U' as ManaColor },
+  { name: 'Swamp', definition: swamp, manaColor: 'B' as ManaColor },
+  { name: 'Mountain', definition: mountain, manaColor: 'R' as ManaColor },
+  { name: 'Forest', definition: forest, manaColor: 'G' as ManaColor },
+];
 
 describe('tap-permanent-for-mana', () => {
   describe('handleTapPermanentForMana', () => {
@@ -30,23 +43,26 @@ describe('tap-permanent-for-mana', () => {
       expect(ctx.state.cards[cardId].tapped).toBe(true);
     });
 
-    it('adds red mana', () => {
-      const playerId = makePlayerId();
+    it.each(basicLands)(
+      'adds $manaColor mana for $name',
+      ({ definition, manaColor }) => {
+        const playerId = makePlayerId();
 
-      const { ctx, cardId } = createContextWithCardInZone(
-        playerId,
-        mountain,
-        'battlefield',
-      );
+        const { ctx, cardId } = createContextWithCardInZone(
+          playerId,
+          definition,
+          'battlefield',
+        );
 
-      handleTapPermanentForMana(ctx, {
-        type: 'TAP_PERMANENT_FOR_MANA',
-        playerId,
-        cardId,
-      });
+        handleTapPermanentForMana(ctx, {
+          type: 'TAP_PERMANENT_FOR_MANA',
+          playerId,
+          cardId,
+        });
 
-      expect(ctx.state.players[playerId].manaPool.R).toBe(1);
-    });
+        expect(ctx.state.players[playerId].manaPool[manaColor]).toBe(1);
+      },
+    );
 
     it('resets priority passes (rule 117.3c)', () => {
       const playerId = makePlayerId();
@@ -67,30 +83,33 @@ describe('tap-permanent-for-mana', () => {
       expect(ctx.state.playersWhoPassedPriority.size).toBe(0);
     });
 
-    it('emits MANA_ADDED event', () => {
-      const playerId = makePlayerId();
+    it.each(basicLands)(
+      'emits MANA_ADDED event for $name',
+      ({ definition, manaColor }) => {
+        const playerId = makePlayerId();
 
-      const { ctx, cardId } = createContextWithCardInZone(
-        playerId,
-        mountain,
-        'battlefield',
-      );
+        const { ctx, cardId } = createContextWithCardInZone(
+          playerId,
+          definition,
+          'battlefield',
+        );
 
-      handleTapPermanentForMana(ctx, {
-        type: 'TAP_PERMANENT_FOR_MANA',
-        playerId,
-        cardId,
-      });
+        handleTapPermanentForMana(ctx, {
+          type: 'TAP_PERMANENT_FOR_MANA',
+          playerId,
+          cardId,
+        });
 
-      expect(ctx.events.some((e) => e.type === 'MANA_ADDED')).toBe(true);
-      const manaEvent = ctx.events.find((e) => e.type === 'MANA_ADDED');
-      expect(manaEvent).toMatchObject({
-        type: 'MANA_ADDED',
-        playerId,
-        color: 'R',
-        amount: 1,
-      });
-    });
+        expect(ctx.events.some((e) => e.type === 'MANA_ADDED')).toBe(true);
+        const manaEvent = ctx.events.find((e) => e.type === 'MANA_ADDED');
+        expect(manaEvent).toMatchObject({
+          type: 'MANA_ADDED',
+          playerId,
+          color: manaColor,
+          amount: 1,
+        });
+      },
+    );
 
     it('throws error when card not found', () => {
       const playerId = makePlayerId();

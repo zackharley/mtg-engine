@@ -2,7 +2,7 @@ import {
   createContextWithCardInZone,
   createTestContext,
 } from '@/__tests__/test-utils';
-import mountain from '@/card-definitions/mountain/card';
+import mountain from '@/card-definitions/cards/mountain/card';
 
 import { makeCardId, makePlayerId } from '../../primitives/id';
 import handlePlayLand from './play-land';

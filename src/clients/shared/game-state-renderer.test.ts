@@ -1,5 +1,5 @@
-import lightningBolt from '@/card-definitions/lightning-bolt/card';
-import mountain from '@/card-definitions/mountain/card';
+import lightningBolt from '@/card-definitions/cards/lightning-bolt/card';
+import mountain from '@/card-definitions/cards/mountain/card';
 import { makeCardId, makePlayerId } from '@/core/primitives/id';
 import { createOrderedStack } from '@/core/primitives/ordered-stack';
 import type { GameState } from '@/core/state/state';

@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 
-import lightningBolt from '@/card-definitions/lightning-bolt/card';
-import mountain from '@/card-definitions/mountain/card';
+import forest from '@/card-definitions/cards/forest/card';
+import island from '@/card-definitions/cards/island/card';
+import lightningBolt from '@/card-definitions/cards/lightning-bolt/card';
+import mountain from '@/card-definitions/cards/mountain/card';
+import plains from '@/card-definitions/cards/plains/card';
+import swamp from '@/card-definitions/cards/swamp/card';
 import type { PlayerId } from '@/core/primitives/id';
 import type { GameSettings } from '@/index';
 
@@ -74,14 +78,22 @@ function createDefaultSettings(): GameSettings {
         name: 'Player 1',
         deck: [
           { definition: lightningBolt, count: 4 },
-          { definition: mountain, count: 20 },
+          { definition: plains, count: 4 },
+          { definition: island, count: 4 },
+          { definition: swamp, count: 4 },
+          { definition: mountain, count: 4 },
+          { definition: forest, count: 4 },
         ],
       },
       {
         name: 'Player 2',
         deck: [
           { definition: lightningBolt, count: 4 },
-          { definition: mountain, count: 20 },
+          { definition: plains, count: 4 },
+          { definition: island, count: 4 },
+          { definition: swamp, count: 4 },
+          { definition: mountain, count: 4 },
+          { definition: forest, count: 4 },
         ],
       },
     ],

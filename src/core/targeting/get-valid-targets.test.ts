@@ -2,7 +2,7 @@ import {
   createContextWithCardInHand,
   createTestContext,
 } from '@/__tests__/test-utils';
-import lightningBolt from '@/card-definitions/lightning-bolt/card';
+import lightningBolt from '@/card-definitions/cards/lightning-bolt/card';
 import { defineCard } from '@/core/card/card';
 import { parseManaCost } from '@/core/costs/mana-costs';
 import type { CardId, PlayerId, TargetId } from '@/core/primitives/id';
