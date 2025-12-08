@@ -150,6 +150,113 @@ The `type` field enables exhaustive pattern matching in switch statements and ty
 - `src/__integration-tests__/` – Integration tests: `rules/` (rule compliance), `scenarios/` (end-to-end scenarios)
 - `src/__tests__/` – Shared test utilities: `test-utils.ts`
 - `src/index.ts` – Public API: `createGame()`, `GameController`, `GameSettings`
+- `src/clients/shared/` – Client abstraction layer: `client-interface.ts` (Client interface), `decision-parser.ts` (input parsing), `game-state-renderer.ts` (state formatting)
+- `src/clients/tui/` – Terminal UI client: `tui-client.ts` (TUIClient class), `cli.ts` (CLI entry point), `components/` (UI panels), `input/` (input handlers), `utils/` (formatting utilities)
+
+## Client Implementations
+
+The engine supports multiple client implementations through a common `Client` interface abstraction. This allows the same game engine to be used with different interfaces (TUI, web, simulation harness, etc.).
+
+### Client Interface
+
+All clients implement the `Client` interface (`@/clients/shared/client-interface.ts`):
+
+```typescript
+export interface Client {
+  startGame(settings: GameSettings): void;
+  handleDecision(playerId: PlayerId, decision: PlayerDecision): void;
+  render(state: GameState): void;
+  onEvent(event: GameEvent): void;
+  getController(): GameController | null;
+  shutdown(): void;
+}
+```
+
+This abstraction ensures clients can:
+
+- Start games with consistent settings
+- Handle player decisions uniformly
+- Render game state appropriately for their medium
+- React to game events
+- Access the underlying game controller
+- Clean up resources on shutdown
+
+### Terminal UI (TUI) Client
+
+The TUI client (`@/clients/tui/tui-client.ts`) provides a full-featured terminal-based interface using the `blessed` library. It demonstrates how to build a complete client implementation.
+
+#### Architecture
+
+The TUI client follows a component-based architecture:
+
+1. **TUIClient** – Main client class that:
+   - Manages the game loop and coordinates UI updates
+   - Handles user input and converts it to `PlayerDecision` objects
+   - Renders game state across multiple panels
+   - Manages event subscriptions and display
+
+2. **Layout Manager** (`utils/layout-manager.ts`) – Creates and manages blessed screen regions:
+   - Top bar (game state, life totals, mana pools)
+   - Left panel (hand)
+   - Center panel (battlefield/stack)
+   - Right panel (available decisions)
+   - Bottom panel (event log)
+
+3. **Display Components** (`components/`) – Pure functions that update individual UI panels:
+   - `hand-panel.ts` – Displays cards in hand with playability highlighting
+   - `battlefield-panel.ts` – Shows permanents grouped by controller
+   - `stack-panel.ts` – Displays spells/abilities on the stack
+   - `decisions-menu.ts` – Lists available decisions with keyboard shortcuts
+   - `event-log.ts` – Color-coded event history with scrolling
+
+4. **Input Handlers** (`input/`) – Handle complex user interactions:
+   - `card-selector.ts` – Interactive modal for selecting cards
+   - `target-selector.ts` – Modal for selecting spell/ability targets
+
+5. **Shared Utilities** (`@/clients/shared/`) – Reusable formatting and parsing:
+   - `game-state-renderer.ts` – Formats game state for display
+   - `decision-parser.ts` – Parses user input into `PlayerDecision` objects
+
+#### Game Loop Pattern
+
+The TUI client implements an asynchronous game loop:
+
+1. **Automatic Advancement** – Engine actions (phase advancement, stack resolution) happen automatically
+2. **Decision Detection** – When a decision is needed, `isWaitingForDecision()` returns true
+3. **Human vs Automated** – Human players wait for input; automated players auto-pass
+4. **Input Handling** – User input (number keys, shortcuts) is converted to decisions via `parseDecisionInput()`
+5. **Target Selection** – Decisions requiring targets trigger interactive modals
+6. **Error Handling** – Invalid decisions display error messages and allow retry
+
+#### Key Patterns
+
+- **Event-Driven Rendering** – Subscribes to game events via `controller.onEvents()` and re-renders on state changes
+- **Status Messages** – Manages temporary status messages (errors, prompts) that persist until cleared
+- **Modal Interactions** – Uses blessed modals for card/target selection, temporarily suspending main input handling
+- **Player-Specific Views** – Renders game state from the perspective of the player needing a decision
+- **Graceful Shutdown** – Handles SIGINT/SIGTERM to clean up blessed screen resources
+
+#### Usage
+
+The TUI client can be run via CLI:
+
+```bash
+npm run tui                    # Multi-player mode
+npm run tui -- --single-player # Single-player (auto-pass opponents)
+npm run tui -- --seed <seed>  # Reproducible games
+```
+
+The CLI entry point (`cli.ts`) parses arguments, creates default game settings, and initializes the TUIClient with appropriate options.
+
+#### Extensibility
+
+The TUI client demonstrates patterns for building other clients:
+
+- **Web Client** – Could use React/Vue components instead of blessed panels
+- **Simulation Harness** – Could auto-make decisions based on algorithms
+- **Replay Viewer** – Could render historical game states without input handling
+
+All clients share the same `GameController` interface, ensuring consistent behavior across implementations.
 
 ## Coding Standards
 
