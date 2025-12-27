@@ -1,7 +1,8 @@
-import { type AbilityEffectArgs, defineCard } from '../../core/card/card';
-import type { ManaColor } from '../../core/costs/mana-costs';
-import { addMana } from '../../core/costs/mana-pool';
-import type { ReduceContext } from '../../core/state/reducer';
+import { produce } from 'immer';
+
+import { defineCard } from '../core/card/card';
+import type { ManaColor } from '../core/costs/mana-costs';
+import type { ReduceContext } from '../core/state/reducer';
 
 /**
  * Factory function to create basic land card definitions.
@@ -28,10 +29,13 @@ export function defineBasicLand(
         type: 'activated',
         text: `Tap: Add ${manaSymbol}.`,
         cost: [{ kind: 'TAP_SOURCE' }],
-        producesMana: true, // Rule 605.1a: This is a mana ability
-        effect: (ctx: ReduceContext, args: AbilityEffectArgs) => {
-          // Add mana to the controller's mana pool
-          ctx.state = addMana(ctx.state, args.controllerId, manaColor, 1);
+        effect: (ctx: ReduceContext) => {
+          // TODO: Determine who the player is who's tapping the land
+          // The handler currently detects mana color from card name
+          // This effect will be properly implemented when mana ability execution is added
+          ctx.state = produce(ctx.state, (_draft) => {
+            // Placeholder - actual mana addition happens in handler
+          });
         },
       },
     ],

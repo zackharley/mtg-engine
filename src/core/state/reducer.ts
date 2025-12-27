@@ -7,6 +7,7 @@ import type {
   StackObjectId,
   TargetId,
 } from '../primitives/id';
+import { handleActivateAbility } from './handlers/activate-ability';
 import handleAdvanceToNextStep from './handlers/advance-to-next-step';
 import { handleCastSpell } from './handlers/cast-spell';
 import handleDrawCard from './handlers/draw-card';
@@ -27,6 +28,12 @@ export type AvailablePlayerDecision =
   | { type: 'CAST_SPELL'; cardId: CardId; targets?: TargetId[] }
   | { type: 'PLAY_LAND'; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
+  | {
+      type: 'ACTIVATE_ABILITY';
+      cardId: CardId;
+      abilityIndex: number;
+      targets?: TargetId[];
+    }
   | { type: 'PASS_PRIORITY' }
   | { type: 'END_GAME' };
 
@@ -41,6 +48,20 @@ export type GameEvent =
   | { type: 'SPELL_RESOLVED'; playerId: PlayerId; cardId: CardId }
   | { type: 'CARD_MOVED'; cardId: CardId; from: ZoneName; to: ZoneName }
   | { type: 'MANA_ADDED'; playerId: PlayerId; color: ManaColor; amount: number }
+  | {
+      type: 'ABILITY_ACTIVATED';
+      playerId: PlayerId;
+      cardId: CardId;
+      abilityIndex: number;
+      stackObjectId: StackObjectId;
+      targets: TargetId[];
+    }
+  | {
+      type: 'MANA_ABILITY_ACTIVATED';
+      playerId: PlayerId;
+      cardId: CardId;
+      abilityIndex: number;
+    }
   | {
       type: 'DIRECT_DAMAGE_APPLIED';
       sourceCardId: CardId;
@@ -66,6 +87,13 @@ export type GameAction =
   | { type: 'DRAW_CARD'; playerId: PlayerId }
   | { type: 'PLAY_LAND'; playerId: PlayerId; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; playerId: PlayerId; cardId: CardId }
+  | {
+      type: 'ACTIVATE_ABILITY';
+      playerId: PlayerId;
+      cardId: CardId;
+      abilityIndex: number;
+      targets?: TargetId[];
+    }
   | { type: 'RESOLVE_TOP_OF_STACK' } // engine/driver action
   | { type: 'ADVANCE_TO_NEXT_STEP' };
 
@@ -94,6 +122,10 @@ export function reduce(
     }
     case 'TAP_PERMANENT_FOR_MANA': {
       handleTapPermanentForMana(ctx, action);
+      break;
+    }
+    case 'ACTIVATE_ABILITY': {
+      handleActivateAbility(ctx, action);
       break;
     }
     case 'ADVANCE_TO_NEXT_STEP': {

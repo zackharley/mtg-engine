@@ -43,6 +43,16 @@ export function parseDecisionInput(
     return tapDecision;
   }
 
+  // Handle "activate <cardname>" or "ability <cardname>"
+  const activateDecision = handleActivateInput(
+    trimmed,
+    availableDecisions,
+    state,
+  );
+  if (activateDecision) {
+    return activateDecision;
+  }
+
   return null;
 }
 
@@ -120,6 +130,31 @@ function handleTapInput(
     if (d.type === 'TAP_PERMANENT_FOR_MANA') {
       return cardNameMatches(d.cardId, cardName, state);
     }
+    if (d.type === 'ACTIVATE_ABILITY') {
+      // Also allow "tap <cardname>" for mana abilities
+      return cardNameMatches(d.cardId, cardName, state);
+    }
+    return false;
+  });
+  return matchingDecision
+    ? convertAvailableDecisionToPlayerDecision(matchingDecision)
+    : null;
+}
+
+function handleActivateInput(
+  trimmed: string,
+  availableDecisions: AvailablePlayerDecision[],
+  state: GameState,
+): PlayerDecision | null {
+  const activateMatch = /^(activate|ability)\s+(.+)$/.exec(trimmed);
+  if (!activateMatch) {
+    return null;
+  }
+  const cardName = activateMatch[2].trim();
+  const matchingDecision = availableDecisions.find((d) => {
+    if (d.type === 'ACTIVATE_ABILITY') {
+      return cardNameMatches(d.cardId, cardName, state);
+    }
     return false;
   });
   return matchingDecision
@@ -149,6 +184,13 @@ function convertAvailableDecisionToPlayerDecision(
       return {
         type: 'TAP_PERMANENT_FOR_MANA',
         cardId: decision.cardId,
+      };
+    case 'ACTIVATE_ABILITY':
+      return {
+        type: 'ACTIVATE_ABILITY',
+        cardId: decision.cardId,
+        abilityIndex: decision.abilityIndex,
+        targets: decision.targets,
       };
     case 'PASS_PRIORITY':
       return { type: 'PASS_PRIORITY' };

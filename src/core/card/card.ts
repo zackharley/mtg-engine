@@ -107,12 +107,24 @@ export interface ActivatedAbility extends CardAbilityBase {
   cost: AbilityCost[];
   effect: AbilityEffect;
   timing?: TimingRestriction;
+  /**
+   * Whether this ability produces mana (rule 605.1a).
+   * An activated ability is a mana ability if it doesn't require a target,
+   * could add mana to a player's mana pool when it resolves, and is not a loyalty ability.
+   */
+  producesMana?: boolean;
 }
 
 export interface TriggeredAbility extends CardAbilityBase {
   type: 'triggered';
   trigger: TriggerCondition;
   effect: AbilityEffect;
+  /**
+   * Whether this ability produces mana (rule 605.1b).
+   * A triggered ability is a mana ability if it doesn't require a target,
+   * triggers from mana abilities/mana being added, and could add mana when it resolves.
+   */
+  producesMana?: boolean;
 }
 
 export interface StaticAbility extends CardAbilityBase {

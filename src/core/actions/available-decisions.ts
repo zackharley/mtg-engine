@@ -1,6 +1,7 @@
 import type { PlayerId } from '../primitives/id';
 import type { AvailablePlayerDecision } from '../state/reducer';
 import type { GameState } from '../state/state';
+import { addActivateAbilityDecisions } from './decisions/activate-ability';
 import { addCastSpellDecisions } from './decisions/cast-spell';
 import { addEndGameDecisions } from './decisions/end-game';
 import { addPassPriorityDecisions } from './decisions/pass-priority';
@@ -21,7 +22,8 @@ type DecisionFunction = (
 const DECISION_PIPELINE: DecisionFunction[] = [
   addPlayLandDecisions,
   addCastSpellDecisions,
-  addTapPermanentForManaDecisions,
+  addActivateAbilityDecisions,
+  addTapPermanentForManaDecisions, // Keep for backward compatibility, will remove later
   addPassPriorityDecisions,
   addEndGameDecisions,
 ];

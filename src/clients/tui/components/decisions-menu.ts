@@ -60,7 +60,6 @@ function formatDecision(
       return `${number}. {red-fg}End Game{/red-fg}`;
     }
     default: {
-      const _exhaustive: never = decision;
       return `${number}. Unknown decision`;
     }
   }

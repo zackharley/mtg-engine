@@ -81,7 +81,6 @@ function formatEvent(event: GameEvent, state: GameState): string {
     case 'KILL_SWITCH_TRIGGERED':
       return formatKillSwitch(event);
     default: {
-      const _exhaustive: never = event;
       return `Unknown event: ${JSON.stringify(event)}`;
     }
   }

@@ -14,6 +14,12 @@ export type PlayerDecision =
   | { type: 'CAST_SPELL'; cardId: CardId; targets?: TargetId[] }
   | { type: 'PLAY_LAND'; cardId: CardId }
   | { type: 'TAP_PERMANENT_FOR_MANA'; cardId: CardId }
+  | {
+      type: 'ACTIVATE_ABILITY';
+      cardId: CardId;
+      abilityIndex: number;
+      targets?: TargetId[];
+    }
   | { type: 'PASS' }
   | { type: 'PASS_PRIORITY' }
   | { type: 'END_GAME' };
@@ -70,6 +76,14 @@ export function createGameController(initialState: GameState): GameController {
           type: 'TAP_PERMANENT_FOR_MANA',
           playerId,
           cardId: decision.cardId,
+        });
+      case 'ACTIVATE_ABILITY':
+        return reduce(state, {
+          type: 'ACTIVATE_ABILITY',
+          playerId,
+          cardId: decision.cardId,
+          abilityIndex: decision.abilityIndex,
+          targets: decision.targets,
         });
       case 'PASS': {
         // Mark player as having passed priority
